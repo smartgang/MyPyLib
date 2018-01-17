@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
+import time
 #读取中文路径
 Collection_Path=unicode('D:\\002 MakeLive\DataCollection\\','utf-8')
 PUBLIC_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\public data\\','utf-8')
@@ -14,19 +15,39 @@ DATA_TYPE_PUBLIC=1
 DATA_TYPE_RAW=2
 DATA_TYPE_TICKS=3
 
-def GET_DATA(datatype=DATA_TYPE_RAW,symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01'):
-    if datatype==DATA_TYPE_RAW:
-        filename=BAR_DATA_PATH+symbol+'\\'+symbol+' '+str(K_MIN)+'.csv'
-    elif datatype==DATA_TYPE_TICKS:
-        filename=TICKS_DATA_PATH+symbol+'\\'+symbol+'ticks '+str(K_MIN)+'.csv'
-    else:
-        return
+def getBarData(symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01',enddate='2018-01-01'):
+
+    filename=BAR_DATA_PATH+symbol+'\\'+symbol+' '+str(K_MIN)+'.csv'
     df=pd.read_csv(filename)
-    #df.drop('Unnamed: 0.1', axis=1, inplace=True)
+    starttime=startdate+" 00:00:00"
+    endtime= enddate+" 00:00:00"
+    startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
+    endutc = float(time.mktime(time.strptime(endtime,"%Y-%m-%d %H:%M:%S")))
+    '''
     df.index=pd.to_datetime(df['utc_time'],unit='s')
     df = df.tz_localize(tz='PRC')
     df=df.truncate(before=startdate)
-    print 'get data success '+symbol+str(K_MIN)+startdate
+    '''
+    df=df.loc[(df['utc_time']>startutc) & (df['utc_time']<endutc)]
+    df['Unnamed: 0'] = range(0, df.shape[0])
+    df.drop('Unnamed: 0.1.1', inplace=True,axis=1)
+    df.reset_index(drop=True,inplace=True)
+    #print 'get data success '+symbol+str(K_MIN)+startdate
+    return df
+
+def getTickData(symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01',enddate='2018-01-01'):
+
+    filename=TICKS_DATA_PATH+symbol+'\\'+symbol+'ticks '+str(K_MIN)+'.csv'
+    df=pd.read_csv(filename)
+    starttime=startdate+" 00:00:00"
+    endtime= enddate+" 00:00:00"
+    startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
+    endutc = float(time.mktime(time.strptime(endtime,"%Y-%m-%d %H:%M:%S")))
+    df=df.loc[(df['utc_time']>startutc) & (df['utc_time']<endutc)]
+    df['Unnamed: 0'] = range(0, df.shape[0])
+    df.drop('Unnamed: 0.1.1',drop=True,inplace=True)
+    df.reset_index(drop=True,inplace=True)
+    #print 'get data success '+symbol+str(K_MIN)+startdate
     return df
 
 def getContractSwaplist(symbol):
@@ -34,3 +55,8 @@ def getContractSwaplist(symbol):
     df=pd.read_csv(datapath+symbol+'ContractSwap.csv')
     return df
     pass
+
+if __name__ == '__main__':
+    df=getBarData("SHFE.RB",K_MIN=600,startdate='2011-10-08',enddate='2013-03-20')
+    print df.head(10)
+    print df.tail(10)
