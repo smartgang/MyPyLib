@@ -27,8 +27,8 @@ def annual_return(resultdf):
     :return:annual_return
     '''
     oprnum=resultdf.shape[0]
-    #startcash=resultdf.ix[0,'own cash']
-    startcash=20000
+    startcash=resultdf.ix[0,'own cash']
+    #startcash=20000
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
     endcash=resultdf.ix[oprnum-1,'own cash']
     enddate=date.fromtimestamp(resultdf.ix[oprnum-1,'closeutc'])
@@ -54,7 +54,8 @@ def max_drawback(resultdf):
 
     df=df[df['date']<=end_date]
     start_date=df.sort_values(by='capital',ascending=False).iloc[0]['date']
-    print('最大回撤为：%f,开始时间：%s,结果时间:%s'% (max_dd,start_date,end_date))
+    #print('最大回撤为：%f,开始时间：%s,结果时间:%s'% (max_dd,start_date,end_date))
+    return max_dd,start_date,end_date
 
 def average_change(resultdf):
     '''
@@ -140,8 +141,8 @@ def sharpe_ratio(resultdf):
 
     #计算年化收益
     oprnum=resultdf.shape[0]
-    #startcash=resultdf.ix[0,'own cash']
-    startcash=20000
+    startcash=resultdf.ix[0,'own cash']
+    #startcash=20000
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
     endcash=resultdf.ix[oprnum-1,'own cash']
     enddate=date.fromtimestamp(resultdf.ix[oprnum-1,'closeutc'])
@@ -183,5 +184,5 @@ if __name__ == '__main__':
     #print('max_up:%d,max_down:%d'%(max_successive_up(resultdf)))
     #print('max_return:%.2f,min_return:%.2f'%(max_period_return(resultdf)))
     #print volatility(resultdf)
-    #print sharpe_ratio(resultdf)
-    print success_rate(resultdf)
+    print sharpe_ratio(resultdf)
+    #print success_rate(resultdf)
