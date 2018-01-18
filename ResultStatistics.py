@@ -32,7 +32,7 @@ def annual_return(resultdf):
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
     endcash=resultdf.ix[oprnum-1,'own cash']
     enddate=date.fromtimestamp(resultdf.ix[oprnum-1,'closeutc'])
-    datenum=float((enddate-startdate).days)
+    datenum=float((enddate-startdate).days)+1
     return pow(endcash/startcash,250/datenum)-1
 
 def max_drawback(resultdf):
@@ -146,7 +146,7 @@ def sharpe_ratio(resultdf):
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
     endcash=resultdf.ix[oprnum-1,'own cash']
     enddate=date.fromtimestamp(resultdf.ix[oprnum-1,'closeutc'])
-    datenum=float((enddate-startdate).days)
+    datenum=float((enddate-startdate).days)+1
     annual_return = pow(endcash/startcash,250/datenum)-1
 
     #计算波动率
