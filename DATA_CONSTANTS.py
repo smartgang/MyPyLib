@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import time
+import os
 #读取中文路径
 Collection_Path=unicode('D:\\002 MakeLive\DataCollection\\','utf-8')
 PUBLIC_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\public data\\','utf-8')
@@ -15,12 +16,10 @@ DATA_TYPE_PUBLIC=1
 DATA_TYPE_RAW=2
 DATA_TYPE_TICKS=3
 
-def getBarData(symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01',enddate='2018-01-01'):
+def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime='2018-01-01 00:00:00'):
 
     filename=BAR_DATA_PATH+symbol+'\\'+symbol+' '+str(K_MIN)+'.csv'
     df=pd.read_csv(filename)
-    starttime=startdate+" 00:00:00"
-    endtime= enddate+" 00:00:00"
     startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
     endutc = float(time.mktime(time.strptime(endtime,"%Y-%m-%d %H:%M:%S")))
     '''
@@ -56,7 +55,21 @@ def getContractSwaplist(symbol):
     return df
     pass
 
+def getCurrentPath():
+    '''
+    返回当前文件所在路径
+    :return:
+    '''
+    return os.path.abspath('.')
+
+def getUpperPath():
+    '''
+    返回当前文件所在的上一级路径
+    :return:
+    '''
+    return os.path.abspath('..')
+
 if __name__ == '__main__':
-    df=getBarData("SHFE.RB",K_MIN=600,startdate='2011-10-08',enddate='2013-03-20')
+    df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
     print df.head(10)
     print df.tail(10)
