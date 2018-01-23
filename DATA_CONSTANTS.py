@@ -62,12 +62,17 @@ def getCurrentPath():
     '''
     return os.path.abspath('.')
 
-def getUpperPath():
+def getUpperPath(uppernume=1):
     '''
     返回当前文件所在的上一级路径
     :return:
     '''
-    return os.path.abspath('..')
+    if uppernume==1:
+        return os.path.abspath('..')
+    elif uppernume==2:
+        return os.path.abspath('...')
+    else:
+        return os.path.abspath('....')
 
 if __name__ == '__main__':
     df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
