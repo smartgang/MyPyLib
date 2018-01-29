@@ -19,7 +19,7 @@ import pandas as pd
 from pandas import Series
 from datetime import date
 
-def annual_return(resultdf):
+def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc'):
     '''
     计算年化收益
     :param resultdf:包含所有操作结果
@@ -27,22 +27,22 @@ def annual_return(resultdf):
     :return:annual_return
     '''
     oprnum=resultdf.shape[0]
-    startcash=resultdf.ix[0,'own cash']
+    startcash=resultdf.ix[0,cashcol]
     #startcash=20000
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
-    endcash=resultdf.ix[oprnum-1,'own cash']
-    enddate=date.fromtimestamp(resultdf.ix[oprnum-1,'closeutc'])
+    endcash=resultdf.ix[oprnum-1,cash_col]
+    enddate=date.fromtimestamp(resultdf.ix[oprnum-1,closeutc_col])
     datenum=float((enddate-startdate).days)+1
     return pow(endcash/startcash,250/datenum)-1
 
-def max_drawback(resultdf):
+def max_drawback(resultdf,cash_col='own cash'):
     '''
     最大回撤
     :param resultdf:
     公式：最大回撤就是从一个高点到一个低点最大的下跌幅度
     :return:
     '''
-    df=pd.DataFrame({'date':resultdf.opentime,'capital':resultdf['own cash']})
+    df=pd.DataFrame({'date':resultdf.opentime,'capital':resultdf[cash_col]})
 
     #df['max2here']=pd.expanding_max(df['capital'])
     df['max2here']=df['capital'].expanding().max()
@@ -57,22 +57,22 @@ def max_drawback(resultdf):
     #print('最大回撤为：%f,开始时间：%s,结果时间:%s'% (max_dd,start_date,end_date))
     return max_dd,start_date,end_date
 
-def average_change(resultdf):
+def average_change(resultdf,retr_col='ret_r'):
     '''
     平均涨幅
     :param resultdf:
     :return:账户收益的平均值
     '''
-    average=resultdf['ret_r'].mean()
+    average=resultdf[retr_col].mean()
     return average
 
-def max_successive_up(resultdf):
+def max_successive_up(resultdf,ret_col='ret'):
     '''
     最大连续上涨和下跌的次数
     :param resultdf:
     :return:
     '''
-    ret = resultdf.ret.tolist()
+    ret = resultdf[ret_col].tolist()
     max_successive_up=0
     max_successive_down=0
     r0 = ret[0]
@@ -100,24 +100,24 @@ def max_successive_up(resultdf):
         r0 = r
     return max_successive_up,max_successive_down
 
-def max_period_return(resultdf):
+def max_period_return(resultdf,retr_col='ret_r'):
     '''
     单次最大收益率和最大亏损率
     :param resultdf:
     :return:
     '''
-    max_return=resultdf.ret_r.max()
-    min_return=resultdf.ret_r.min()
+    max_return=resultdf[retr_col].max()
+    min_return=resultdf[retr_col].min()
     return max_return,min_return
 
-def volatility(resultdf):
+def volatility(resultdf,retr_col='ret_r'):
     '''
     计算收益波动率:账户日收益的年化标准差
     :param resultdf:
     :return:
     '''
     from math import sqrt
-    vol = resultdf.ret_r.std() * sqrt(250)
+    vol = resultdf[retr_col].std() * sqrt(250)
     return vol
 
 def beta(resultdf,benchmart_rtn):
@@ -130,7 +130,7 @@ def beta(resultdf,benchmart_rtn):
     b=resultdf.ret_r.cov(benchmart_rtn)/benchmart_rtn.var()
     return b
 
-def sharpe_ratio(resultdf):
+def sharpe_ratio(resultdf,cash_col='own cash',closeutc_col='closeutc',retr_col='ret_r'):
     '''
     计算夏普比率:（账户年化收益率-无风险利率）/ 收益波动率。
     :param resultdf:
@@ -141,17 +141,17 @@ def sharpe_ratio(resultdf):
 
     #计算年化收益
     oprnum=resultdf.shape[0]
-    startcash=resultdf.ix[0,'own cash']
+    startcash=resultdf.ix[0,cash_col]
     #startcash=20000
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
-    endcash=resultdf.ix[oprnum-1,'own cash']
-    enddate=date.fromtimestamp(resultdf.ix[oprnum-1,'closeutc'])
+    endcash=resultdf.ix[oprnum-1,cash_col]
+    enddate=date.fromtimestamp(resultdf.ix[oprnum-1,closeutc_col])
     datenum=float((enddate-startdate).days)+1
     annual_return = pow(endcash/startcash,250/datenum)-1
 
     #计算波动率
     from math import sqrt
-    vol = resultdf.ret_r.std() * sqrt(250)
+    vol = resultdf[retr_col].std() * sqrt(250)
 
     #计算夏普比率
     sharpe=(annual_return-rf)/vol
@@ -166,13 +166,13 @@ def info_ratio(resultdf,indexreturn):
     '''
     pass
 
-def success_rate(resultdf):
+def success_rate(resultdf,ret_col='ret'):
     '''
     计算所有操作的成功率，ret>0为成功
     :param resultdf:
     :return:
     '''
-    successcount=resultdf.loc[resultdf['ret']>0].shape[0]
+    successcount=resultdf.loc[resultdf[ret_col]>0].shape[0]
     totalcount=resultdf.shape[0]
     return successcount/float(totalcount)
 
