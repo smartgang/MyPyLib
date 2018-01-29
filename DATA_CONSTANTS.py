@@ -70,6 +70,34 @@ def getUpperPath(uppernume=1):
     p='/'.join(['..']*uppernume)
     return os.path.abspath(p)
 
+#-------------------------------------------------------------
+def getPriceTick(symbol):
+    '''
+    查询品种的最小价格变动
+    :param symbol:
+    :return:
+    '''
+    contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
+    return contract.ix[symbol,'price_tick']
+
+def getMultiplier(symbol):
+    '''
+    查询品种的合约乘数
+    :param symbol:
+    :return:
+    '''
+    contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
+    return contract.ix[symbol,'prict_tick']
+
+def getMarginRatio(symbol):
+    '''
+    查询品种的保证金率
+    :param symbol:
+    :return:
+    '''
+    contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
+    return contract.ix[symbol,'prict_tick']
+
 if __name__ == '__main__':
     df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
     print df.head(10)

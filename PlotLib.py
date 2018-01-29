@@ -163,10 +163,11 @@ def drawK(axes,open,high,low,close):
         [True if po == pc and po is not None else False for po, pc in _zipoc])  # 标示出该天股价日内走平的一个序列
 
     #   对开收盘价进行视觉修正
+    startlist=open.index.tolist()[0]
     for idx, poc in enumerate(_zipoc):
         if poc[0] == poc[1] and None not in poc:
-            open[idx] = poc[0] - 0.1  # 稍微偏离一点，使得在图线上不致于完全看不到
-            close[idx] = poc[1] + 0.1
+            open[startlist+idx] = poc[0] - 0.1  # 稍微偏离一点，使得在图线上不致于完全看不到
+            close[startlist+idx] = poc[1] + 0.1
 
     rarray_open = numpy.array(open)
     rarray_close = numpy.array(close)
@@ -195,9 +196,9 @@ def drawK(axes,open,high,low,close):
                     label='_nolegend_', alpha=1)
 
 #画MA20===============================================================================
-def drawMA(axes,ma,color='white'):
+def drawMA(axes,ma,color='white',label='MA'):
     rarray_ma = numpy.array(ma)
-    axes.plot(rarray_ma,color=color,linewidth=1)
+    axes.plot(rarray_ma,color=color,linewidth=1,label=label)
 
 #画买卖点：========================================================================================
 def drawOprline(axes,opropendf,oprcolsedf,bottom,top_array,beginindex):
