@@ -27,7 +27,7 @@ def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc'):
     :return:annual_return
     '''
     oprnum=resultdf.shape[0]
-    startcash=resultdf.ix[0,cashcol]
+    startcash=resultdf.ix[0,cash_col]
     #startcash=20000
     startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
     endcash=resultdf.ix[oprnum-1,cash_col]
