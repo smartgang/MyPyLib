@@ -54,7 +54,7 @@ def getContractSwaplist(symbol):
     df=pd.read_csv(datapath+symbol+'ContractSwap.csv')
     return df
     pass
-
+#----------------------------------------------------------
 def getCurrentPath():
     '''
     返回当前文件所在路径
@@ -87,7 +87,7 @@ def getMultiplier(symbol):
     :return:
     '''
     contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
-    return contract.ix[symbol,'prict_tick']
+    return contract.ix[symbol,'multiplier']
 
 def getMarginRatio(symbol):
     '''
@@ -96,7 +96,16 @@ def getMarginRatio(symbol):
     :return:
     '''
     contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
-    return contract.ix[symbol,'prict_tick']
+    return contract.ix[symbol,'margin_ratio']
+
+def getSlip(symbol):
+    '''
+    查询品种配置的滑点
+    :param symbol:
+    :return:
+    '''
+    contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
+    return contract.ix[symbol,'slip']
 
 if __name__ == '__main__':
     df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
