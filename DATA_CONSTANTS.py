@@ -16,8 +16,21 @@ DATA_TYPE_PUBLIC=1
 DATA_TYPE_RAW=2
 DATA_TYPE_TICKS=3
 
-def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime='2018-01-01 00:00:00'):
+def getTradedates(exchangeid='SHFE',startdate='2016-01-01',enddate='2017-12-30'):
+    #获取交易所的交易日
+    #原文件保存在public data文件夹中
+    startutc = float(time.mktime(time.strptime(startdate+' 00:00:00', "%Y-%m-%d %H:%M:%S")))
+    endutc = float(time.mktime(time.strptime(enddate+' 23:30:00',"%Y-%m-%d %H:%M:%S")))
+    tradedatedf=pd.read_csv(PUBLIC_DATA_PATH+'TradeDates.csv',index_col='exchange_id')
+    df = tradedatedf.loc[(tradedatedf['utc_time'] > startutc) & (tradedatedf['utc_time'] < endutc)]
+    df=df.loc[exchangeid,:]
+    df.reset_index(inplace=True)
+    df.drop('Unnamed: 0', inplace=True, axis=1)
+    return df
 
+#---------------------------------------------------------------------------------------------
+def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime='2018-01-01 00:00:00'):
+    #读取bar数据
     filename=BAR_DATA_PATH+symbol+'\\'+symbol+' '+str(K_MIN)+'.csv'
     df=pd.read_csv(filename)
     startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
@@ -109,6 +122,7 @@ def getSlip(symbol):
 
 
 if __name__ == '__main__':
-    df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
+    #df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
+    df=getTradedates('SHFE','2017-10-01','2017-12-12')
     print df.head(10)
     print df.tail(10)
