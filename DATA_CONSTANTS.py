@@ -107,6 +107,7 @@ def getSlip(symbol):
     contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
     return contract.ix[symbol,'slip']
 
+
 if __name__ == '__main__':
     df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
     print df.head(10)
