@@ -129,15 +129,36 @@ def getSlip(symbol):
 
 class TickDataSupplier:
 
-    def __init__(self,startdate,enddate):
-        whold=
-        pass
+    def __init__(self,symbol,startdate,enddate):
+        self.symbol=symbol
+        self.exchange,self.secid=symbol.split('.',1)
+        datelist=getTradedates(self.exchange,startdate,enddate)['strtime']
+        self.tickdatadf=pd.DataFrame()
+        for d in datelist:
+            print d
+            self.tickdatadf=pd.concat([self.tickdatadf,getTickByDate(self.symbol,d)])
+
+    def getTickData(self,starttime,endtime):
+        startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
+        endutc = float(time.mktime(time.strptime(endtime, "%Y-%m-%d %H:%M:%S")))
+        '''
+        df.index=pd.to_datetime(df['utc_time'],unit='s')
+        df = df.tz_localize(tz='PRC')
+        df=df.truncate(before=startdate)
+        '''
+        df = self.tickdatadf.loc[(self.tickdatadf['utc_time'] > startutc) & (self.tickdatadf['utc_time'] < endutc)]
+        df['Unnamed: 0'] = range(0, df.shape[0])
+        #df.drop('Unnamed: 0.1.1', inplace=True, axis=1)
+        df.reset_index(drop=True, inplace=True)
+        return df
     pass
 
 
 
 if __name__ == '__main__':
     #df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
-    df=getTradedates('SHFE','2017-10-01','2017-12-12')
-    print df.head(10)
-    print df.tail(10)
+    #df=getTradedates('SHFE','2017-10-01','2017-12-12')
+    ticksupplier=TickDataSupplier('SHFE.RB','2017-10-01','2017-12-10')
+    df1=ticksupplier.getTickData('2017-10-01 00:00:00','2017-12-03 22:10:15')
+    print df1.head(10)
+    print df1.tail(10)
