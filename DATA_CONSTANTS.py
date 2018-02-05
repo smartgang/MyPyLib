@@ -3,11 +3,11 @@ import pandas as pd
 import time
 import os
 #读取中文路径
-Collection_Path=unicode('D:\\002 MakeLive\DataCollection\\','utf-8')
-PUBLIC_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\public data\\','utf-8')
-RAW_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\raw data\\','utf-8')
-TICKS_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\ticks data\\','utf-8')
-BAR_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\bar data\\','utf-8')
+Collection_Path=unicode('D:\\DataCollection\\','utf-8')
+PUBLIC_DATA_PATH=unicode('D:\\DataCollection\public data\\','utf-8')
+RAW_DATA_PATH=unicode('D:\\DataCollection\\raw data\\','utf-8')
+TICKS_DATA_PATH=unicode('D:\\DataCollection\\ticks data\\','utf-8')
+BAR_DATA_PATH=unicode('D:\\DataCollection\\bar data\\','utf-8')
 
 TICKS_DATA_START_DATE='2017-8-17'#包含了8-17日
 LAST_CONCAT_DATA='2017-10-17'#记录上次汇总数据的时间，不包含当天（要再加上一天，要不然后面truncate会不对）
@@ -34,6 +34,7 @@ def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime
     #print 'get data success '+symbol+str(K_MIN)+startdate
     return df
 
+'''
 def getTickData(symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01',enddate='2018-01-01'):
 
     filename=TICKS_DATA_PATH+symbol+'\\'+symbol+'ticks '+str(K_MIN)+'.csv'
@@ -48,6 +49,12 @@ def getTickData(symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01',enddate='2018-0
     df.reset_index(drop=True,inplace=True)
     #print 'get data success '+symbol+str(K_MIN)+startdate
     return df
+'''
+def getTickByDate(symbol='SHFE.RB',tradedate='2017-08-07'):
+    filename=TICKS_DATA_PATH+symbol+'\\'+symbol+tradedate+'ticks.csv'
+    df=pd.read_csv(filename)
+    return df
+
 
 def getContractSwaplist(symbol):
     datapath=Collection_Path+'vitualContract\\'
@@ -106,6 +113,14 @@ def getSlip(symbol):
     '''
     contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
     return contract.ix[symbol,'slip']
+
+class TickDataSupplier:
+
+    def __init__(self,startdate,enddate):
+        whold=
+        pass
+    pass
+
 
 
 if __name__ == '__main__':
