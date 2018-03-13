@@ -18,10 +18,13 @@ def calMACD(closedata, short=12, long1=26, mid=9):
     :param mid:
     :return:MACD,DEA,Bar,SEMA,LEMA
     '''
-    sema = pd.ewma(closedata, span=short)
-    lema  = pd.ewma(closedata, span=long1)
+    #sema = pd.ewma(closedata, span=short)
+    # lema  = pd.ewma(closedata, span=long1)
+    sema=closedata.ewm(span=short).mean()
+    lema=closedata.ewm(span=long1).mean()
     data_dif= sema - lema
-    data_dea = pd.ewma(data_dif, span=mid)
+    #data_dea = pd.ewma(data_dif, span=mid)
+    data_dea = data_dif.ewm(span=mid).mean()
     data_bar = 2 * (data_dif - data_dea)
     return data_dif,data_dea,data_bar,sema,lema
 
