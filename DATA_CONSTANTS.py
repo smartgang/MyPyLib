@@ -16,6 +16,8 @@ DATA_TYPE_PUBLIC=1
 DATA_TYPE_RAW=2
 DATA_TYPE_TICKS=3
 
+
+
 def getTradedates(exchangeid='SHFE',startdate='2016-01-01',enddate='2017-12-30'):
     #获取交易所的交易日
     #原文件保存在public data文件夹中
@@ -128,6 +130,10 @@ def getSlip(symbol):
     return contract.ix[symbol,'slip']
 
 class SymbolInfo:
+
+    POUNDGE_TYPE_HAND = u'hand'
+    POUNDGE_TYPE_RATE = u'rate'
+
     '''合约信息类'''
     def __init__(self,symbol):
         self.symbol=symbol
