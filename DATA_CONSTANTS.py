@@ -3,11 +3,11 @@ import pandas as pd
 import time
 import os
 #读取中文路径
-Collection_Path=unicode('D:\\DataCollection\\','utf-8')
-PUBLIC_DATA_PATH=unicode('D:\\DataCollection\public data\\','utf-8')
-RAW_DATA_PATH=unicode('D:\\DataCollection\\raw data\\','utf-8')
-TICKS_DATA_PATH=unicode('D:\\DataCollection\\ticks data\\','utf-8')
-BAR_DATA_PATH=unicode('D:\\DataCollection\\bar data\\','utf-8')
+Collection_Path=unicode('D:\\002 MakeLive\DataCollection\\','utf-8')
+PUBLIC_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\public data\\','utf-8')
+RAW_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\raw data\\','utf-8')
+TICKS_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\ticks data\\','utf-8')
+BAR_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\bar data\\','utf-8')
 
 TICKS_DATA_START_DATE='2017-8-17'#包含了8-17日
 LAST_CONCAT_DATA='2017-10-17'#记录上次汇总数据的时间，不包含当天（要再加上一天，要不然后面truncate会不对）
@@ -42,7 +42,7 @@ def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime
     '''
     df=df.loc[(df['utc_time']>startutc) & (df['utc_time']<endutc)]
     df['Unnamed: 0'] = range(0, df.shape[0])
-    df.drop('Unnamed: 0.1.1', inplace=True,axis=1)
+    #df.drop('Unnamed: 0.1', inplace=True,axis=1)
     df.reset_index(drop=True,inplace=True)
     #print 'get data success '+symbol+str(K_MIN)+startdate
     return df
@@ -127,15 +127,47 @@ def getSlip(symbol):
     contract=pd.read_excel(PUBLIC_DATA_PATH+'Contract.xlsx',index_col='Contract')
     return contract.ix[symbol,'slip']
 
+class SymbolInfo:
+    '''合约信息类'''
+    def __init__(self,symbol):
+        self.symbol=symbol
+        contract = pd.read_excel(PUBLIC_DATA_PATH + 'Contract.xlsx', index_col='Contract')
+        self.priceTick=contract.ix[symbol, 'price_tick']
+        self.multiplier=contract.ix[symbol, 'multiplier']
+        self.marginRatio=contract.ix[symbol, 'margin_ratio']
+        self.slip=contract.ix[symbol, 'slip']
+        self.poundageType=contract.ix[symbol,'poundage_type']
+        self.poundageFee = contract.ix[symbol,'poundage_fee']
+        self.poundageRate = contract.ix[symbol,'poundage_rate']
+
+    def getPriceTick(self):
+        return self.priceTick
+
+    def getMultiplier(self):
+        return self.multiplier
+
+    def getMarginRatio(self):
+        return self.marginRatio
+
+    def getSlip(self):
+        return self.slip
+
+    def getPoundage(self):
+        return self.poundageType,self.poundageFee,self.poundageRate
+
 class TickDataSupplier:
 
     def __init__(self,symbol,startdate,enddate):
+        self.startdate=startdate
+        self.enddate=enddate
+        self.startdateutc = float(time.mktime(time.strptime(startdate+' 00:00:00', "%Y-%m-%d %H:%M:%S")))
+        self.enddateutc = float(time.mktime(time.strptime(enddate+' 23:59:59', "%Y-%m-%d %H:%M:%S")))
         self.symbol=symbol
         self.exchange,self.secid=symbol.split('.',1)
-        datelist=getTradedates(self.exchange,startdate,enddate)['strtime']
+        self.datelist=getTradedates(self.exchange,self.startdate,self.enddate)['strtime']
         self.tickdatadf=pd.DataFrame()
-        for d in datelist:
-            print d
+        for d in self.datelist:
+            print 'Collecting tick data:',d
             self.tickdatadf=pd.concat([self.tickdatadf,getTickByDate(self.symbol,d)])
 
     def getTickData(self,starttime,endtime):
@@ -151,10 +183,28 @@ class TickDataSupplier:
         #df.drop('Unnamed: 0.1.1', inplace=True, axis=1)
         df.reset_index(drop=True, inplace=True)
         return df
-    pass
 
+    def getTickDataByUtc(self,startutc,endutc):
 
+        df = self.tickdatadf.loc[(self.tickdatadf['utc_time'] > startutc) & (self.tickdatadf['utc_time'] < endutc)]
+        df['Unnamed: 0'] = range(0, df.shape[0])
+        #df.drop('Unnamed: 0.1.1', inplace=True, axis=1)
+        df.reset_index(drop=True, inplace=True)
+        return df
 
+    def getDateRange(self):
+        return self.startdate,self.enddate
+
+    def getDateUtcRange(self):
+        return self.startdateutc,self.enddateutc
+
+    def getSymbol(self):
+        return self.symbol
+
+    def getDateList(self):
+        return self.datelist
+
+#========================================================================================
 if __name__ == '__main__':
     #df=getBarData("SHFE.RB",K_MIN=600,starttime='2011-10-08 00:00:00',endtime='2013-03-20 00:00:00')
     #df=getTradedates('SHFE','2017-10-01','2017-12-12')
