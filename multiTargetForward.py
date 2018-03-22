@@ -46,7 +46,7 @@ def calWhiteResult(whiteWindows,symbol,K_MIN,parasetlist,monthlist,datapath,resu
         sharpe_list.append(setname)
         success_rate_list.append(setname)
         drawback_list.append(setname)
-        for i in range(13,len(monthlist)):#修改为从第13个月开始
+        for i in range(12,len(monthlist)-1):#修改为从第13个月开始
             whiteWindowsStart=monthlist[i-whiteWindows]+'-01 00:00:00'
             whiteWindowsEnd=monthlist[i]+'-01 00:00:00'#从取end月份的1日，表示的是i-1个月的数据
             startutc=float(time.mktime(time.strptime(whiteWindowsStart,"%b-%y-%d %H:%M:%S")))
@@ -347,8 +347,8 @@ def runPara(whiteWindows,symbol,K_MIN,parasetlist,monthlist,rawdatapath,resultpa
 
 if __name__ == '__main__':
     #参数配置
-    exchange_id = 'DCE'
-    sec_id='I'
+    exchange_id = 'SHFE'
+    sec_id='RB'
     K_MIN = 600
     symbol = '.'.join([exchange_id, sec_id])
     startdate='2016-01-01'
@@ -360,6 +360,7 @@ if __name__ == '__main__':
     colslist=getColumnsName(newresult)
     resultfilesuffix='result.csv' #前面不带空格
     monthlyretrsuffix='monthly_retr.csv' #前面不带下划线
+
     #文件路径
     upperpath=DC.getUpperPath(uppernume=2)
     resultpath=upperpath+"\\Results\\"
