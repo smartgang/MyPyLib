@@ -291,7 +291,7 @@ def dslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder):
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     max_retrace_rate = oprdf['new_retrace rate'].max()
-
+    del oprdf
     return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate,max_retrace_rate]
 
 
