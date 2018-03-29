@@ -181,15 +181,15 @@ def rankByWhiteResult(symbol,K_MIN,whiteWindows,datapath,resultpath):
     print ('WhiteWindows:%d calculating rank result Finished!'% whiteWindows)
     print datetime.now()
 
-def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath,monthlyfilesuffix='monthly_retr.csv'):
+def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath):
     '''
     根据排序结果，从月收益表中抽出各月收益，形成推进结果总收益
     :return:
     '''
-    tf = "%s%s_%d_%s" % (rawdatapath, symbol, K_MIN,monthlyfilesuffix)
-    retdf=pd.read_csv(tf,index_col='Setname')
+    #tf = "%s%s_%d_%s" % (rawdatapath, symbol, K_MIN,monthlyfilesuffix)
+    #retdf=pd.read_csv(tf,index_col='Setname')
     targetSet=['Rank1','Rank2','Rank3','Rank4','Rank5','Rank6','Rank7']
-    resultlist=[]
+    #resultlist=[]
     setresultlist=[]
     groupcounter=0
     colss=[]
@@ -198,7 +198,7 @@ def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath,monthlyfilesuffix
             print targetName+' '+str(whiteWindows)
             #每个window进行遍历
             setlist=[groupcounter,targetName,whiteWindows]
-            retlist=[groupcounter,targetName,whiteWindows]
+            #retlist=[groupcounter,targetName,whiteWindows]
             ranknamehead = ("%s_%s_%d_win%d_" % (rankpath, symbol, K_MIN, whiteWindows))
             rankdf=pd.read_csv(ranknamehead+targetName+'.csv',index_col='Setname')  #排名文件
             cols = rankdf.columns.tolist()[1:]
@@ -208,17 +208,17 @@ def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath,monthlyfilesuffix
                 head=rankdf.sort_values(axis=0,by=col,ascending=False).iloc[0]
                 setname=head.name
                 setlist.append(setname)
-                ret=retdf.ix[setname,col]
-                retlist.append(ret)
+                #ret=retdf.ix[setname,col]
+                #retlist.append(ret)
             groupcounter+=1
             setresultlist.append(setlist)
-            resultlist.append(retlist)
+            #resultlist.append(retlist)
     columns=['Group','Target','Windows']
     for c in colss:
         columns.append(c)
-    retresult=pd.DataFrame(resultlist,columns=columns)
+    #retresult=pd.DataFrame(resultlist,columns=columns)
     setresultdf= pd.DataFrame(setresultlist,columns=columns)
-    retresult.to_csv(rawdatapath+'ForwardOprAnalyze\\'+symbol+str(K_MIN)+'multiTargetForwardResult.csv')
+    #retresult.to_csv(rawdatapath+'ForwardOprAnalyze\\'+symbol+str(K_MIN)+'multiTargetForwardResult.csv')
     setresultdf.to_csv(rawdatapath+'ForwardOprAnalyze\\'+symbol+str(K_MIN)+'multiTargetForwardSetname.csv')
     pass
 
@@ -359,7 +359,7 @@ if __name__ == '__main__':
     newresult=True
     colslist=getColumnsName(newresult)
     resultfilesuffix='result.csv' #前面不带空格
-    monthlyretrsuffix='monthly_retr.csv' #前面不带下划线
+    #monthlyretrsuffix='monthly_retr.csv' #前面不带下划线
 
     #文件路径
     upperpath=DC.getUpperPath(uppernume=2)
@@ -390,11 +390,11 @@ if __name__ == '__main__':
 
     starttime=datetime.now()
     print starttime
-    '''
+
     for whiteWindows in windowsSet:
         #calWhiteResult(whiteWindows=whiteWindows,symbol=symbol,K_MIN=K_MIN,parasetlist=parasetlist,monthlist=monthlist,datapath=rawdatapath,resultpath=forwordresultpath)
         rankByWhiteResult(symbol=symbol,K_MIN=K_MIN,whiteWindows=whiteWindows,datapath=forwordresultpath,resultpath=forwardrankpath)
-    '''
+    
     # 多进程优化，启动一个对应CPU核心数量的进程池
 
     pool = multiprocessing.Pool(multiprocessing.cpu_count()-1)
@@ -404,7 +404,8 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
 
-    calGrayResult(symbol, K_MIN, windowsSet, forwardrankpath,rawdatapath,monthlyfilesuffix=monthlyretrsuffix)
+    calGrayResult(symbol, K_MIN, windowsSet, forwardrankpath,rawdatapath)
+
     calOprResult(rawdatapath,symbol,K_MIN,nextmonth,columns=colslist,resultfilesuffix=resultfilesuffix)
     endtime = datetime.now()
     print starttime
