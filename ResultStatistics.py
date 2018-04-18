@@ -176,6 +176,48 @@ def success_rate(resultdf,ret_col='ret'):
     totalcount=resultdf.shape[0]
     return successcount/float(totalcount)
 
+def calcResult(result,symbolinfo,initialCash,positionRatio,ret_col='ret'):
+    '''计算交易结果'''
+
+    multiplier = symbolinfo.getMultiplier() #乘数
+    poundgeType, poundgeFee, poundgeRate = symbolinfo.getPoundage() #手续费率
+    marginRatio=symbolinfo.getMarginRatio() #保证金率
+
+    newresult=pd.DataFrame()
+    newresult['ret']=result[ret_col]
+    newresult['openprice']=result['openprice']
+    newresult['commission_fee'] = 0 #手续费
+    newresult['per earn'] = 0  # 单笔盈亏
+    newresult['own cash'] = 0  # 自有资金线
+
+    #计算第一次交易的结果
+    availableFund = initialCash*positionRatio
+    cashPerHand = newresult.ix[0,'openprice'] * multiplier
+    hands=availableFund//(cashPerHand*marginRatio)
+    if poundgeType == symbolinfo.POUNDGE_TYPE_RATE:
+        newresult.ix[0, 'commission_fee'] = cashPerHand * hands * poundgeRate * 2
+    else:
+        newresult.ix[0, 'commission_fee'] = hands * poundgeFee * 2
+    newresult.ix[0, 'per earn'] = newresult.ix[0, ret_col] * hands * multiplier
+    newresult.ix[0, 'own cash'] = initialCash + newresult.ix[0, 'per earn'] - newresult.ix[0, 'commission_fee']
+
+    #计算后续交易的结果
+    oprtimes = newresult.shape[0]
+    for i in range(1, oprtimes):
+        lastOwnCash=newresult.ix[i-1,'own cash']
+        availableFund = lastOwnCash * positionRatio #本次可用资金等于上一次操作后的资金*持仓率
+        cashPerHand = newresult.ix[i, 'openprice'] * multiplier
+        hands = availableFund // (cashPerHand * marginRatio)
+        if poundgeType == symbolinfo.POUNDGE_TYPE_RATE:
+            commission = cashPerHand * hands * poundgeRate * 2
+        else:
+            commission = hands * poundgeFee * 2
+        newresult.ix[i,'commission_fee'] = commission
+        newresult.ix[i, 'per earn'] = newresult.ix[i, ret_col] * hands * multiplier
+        newresult.ix[i, 'own cash'] = lastOwnCash + newresult.ix[i, 'per earn'] - commission
+
+    return newresult['commission_fee'],newresult['per earn'],newresult['own cash']
+
 if __name__ == '__main__':
     resultdf=pd.read_csv('D:\\002 MakeLive\myquant\LvyiWin\Results\SHFE RB600 slip\SHFE.RB600 Set6213 MS4 ML21 KN24 DN30 result.csv')
     #print annual_return(resultdf)
