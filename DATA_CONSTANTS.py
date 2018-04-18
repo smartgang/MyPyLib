@@ -8,6 +8,7 @@ PUBLIC_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\public data\\','utf-8'
 RAW_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\raw data\\','utf-8')
 TICKS_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\ticks data\\','utf-8')
 BAR_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\bar data\\','utf-8')
+VOLUME_DATA_PATH=unicode('D:\\002 MakeLive\DataCollection\\volume data\\','utf-8')
 
 TICKS_DATA_START_DATE='2017-8-17'#包含了8-17日
 LAST_CONCAT_DATA='2017-10-17'#记录上次汇总数据的时间，不包含当天（要再加上一天，要不然后面truncate会不对）
@@ -22,9 +23,9 @@ def getTradedates(exchangeid='SHFE',startdate='2016-01-01',enddate='2017-12-30')
     #获取交易所的交易日
     #原文件保存在public data文件夹中
     startutc = float(time.mktime(time.strptime(startdate+' 00:00:00', "%Y-%m-%d %H:%M:%S")))
-    endutc = float(time.mktime(time.strptime(enddate+' 23:30:00',"%Y-%m-%d %H:%M:%S")))
+    endutc = float(time.mktime(time.strptime(enddate+' 23:59:59',"%Y-%m-%d %H:%M:%S")))
     tradedatedf=pd.read_csv(PUBLIC_DATA_PATH+'TradeDates.csv',index_col='exchange_id')
-    df = tradedatedf.loc[(tradedatedf['utc_time'] > startutc) & (tradedatedf['utc_time'] < endutc)]
+    df = tradedatedf.loc[(tradedatedf['utc_time'] >= startutc) & (tradedatedf['utc_time'] < endutc)]
     df=df.loc[exchangeid,:]
     df.reset_index(inplace=True)
     df.drop('Unnamed: 0', inplace=True, axis=1)
@@ -42,6 +43,19 @@ def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime
     df = df.tz_localize(tz='PRC')
     df=df.truncate(before=startdate)
     '''
+    df=df.loc[(df['utc_time']>startutc) & (df['utc_time']<endutc)]
+    df['Unnamed: 0'] = range(0, df.shape[0])
+    #df.drop('Unnamed: 0.1', inplace=True,axis=1)
+    df.reset_index(drop=True,inplace=True)
+    #print 'get data success '+symbol+str(K_MIN)+startdate
+    return df
+
+def getVolumeData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime='2018-01-01 00:00:00'):
+    #读取bar数据
+    filename=VOLUME_DATA_PATH+symbol+'\\'+symbol+' '+str(K_MIN)+'_volume.csv'
+    df=pd.read_csv(filename)
+    startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
+    endutc = float(time.mktime(time.strptime(endtime,"%Y-%m-%d %H:%M:%S")))
     df=df.loc[(df['utc_time']>startutc) & (df['utc_time']<endutc)]
     df['Unnamed: 0'] = range(0, df.shape[0])
     #df.drop('Unnamed: 0.1', inplace=True,axis=1)
