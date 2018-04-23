@@ -16,13 +16,14 @@ import multiprocessing
 import DATA_CONSTANTS as DC
 import os
 
-def calWhiteResult(whiteWindows,symbol,K_MIN,parasetlist,monthlist,datapath,resultpath,columns,filesuffix='result.csv'):
+def calWhiteResult(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthlist,datapath,resultpath,columns,filesuffix='result.csv'):
     '''
     根据月列表和白色窗口大小，计算推进过程中，每一期白区4个目标分别的结果，保存到4个result文件中
     :return:
     '''
     print ('WhiteWindows:%d calculating forward result Start!'% whiteWindows)
     print datetime.now()
+    symbol=symbolinfo.symbol
     parasetlen = parasetlist.shape[0]
     annual_total_list=[]
     sharpe_total_list=[]
@@ -36,7 +37,7 @@ def calWhiteResult(whiteWindows,symbol,K_MIN,parasetlist,monthlist,datapath,resu
     for i in np.arange(0, parasetlen):
         setname=parasetlist.ix[i,'Setname']
         #print setname
-        filename=datapath+symbol + str(K_MIN) + ' ' + setname + ' '+filesuffix
+        filename=datapath+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' '+filesuffix
         resultdf=pd.read_csv(filename)
         annual_list=[]
         sharpe_list=[]
@@ -78,7 +79,7 @@ def calWhiteResult(whiteWindows,symbol,K_MIN,parasetlist,monthlist,datapath,resu
     sharpedf=pd.DataFrame(sharpe_total_list,columns=colname)
     successdf=pd.DataFrame(success_rate_total_list,columns=colname)
     drawbackdf=pd.DataFrame(drawback_total_list,columns=colname)
-    filenamehead=("%s_%s_%d_win%d_"%(resultpath,symbol,K_MIN,whiteWindows))
+    filenamehead=("%s_%s_%s_%d_win%d_"%(resultpath,strategyName,symbol,K_MIN,whiteWindows))
     annualdf.to_csv(filenamehead+'annual_result.csv')
     sharpedf.to_csv(filenamehead+'sharpe_result.csv')
     successdf.to_csv(filenamehead+'success_rate_result.csv')
@@ -86,7 +87,7 @@ def calWhiteResult(whiteWindows,symbol,K_MIN,parasetlist,monthlist,datapath,resu
     print ('WhiteWindows:%d calculating forward result Finish!'% whiteWindows)
     print datetime.now()
 
-def rankByWhiteResult(symbol,K_MIN,whiteWindows,datapath,resultpath):
+def rankByWhiteResult(strategyName,symbolinfo,K_MIN,whiteWindows,datapath,resultpath):
     '''
     对目标结果进行排序打分
     按列来，每列排序重置顺序，再加分
@@ -94,7 +95,8 @@ def rankByWhiteResult(symbol,K_MIN,whiteWindows,datapath,resultpath):
     '''
     print ('WhiteWindows:%d calculating rank result Start!'% whiteWindows)
     print datetime.now()
-    datanamehead = ("%s_%s_%d_win%d_" % (datapath, symbol, K_MIN, whiteWindows))
+    symbol=symbolinfo.symbol
+    datanamehead = ("%s_%s_%s_%d_win%d_" % (datapath, strategyName,symbol, K_MIN, whiteWindows))
     annualdf=pd.read_csv(datanamehead+'annual_result.csv')
     sharpedf=pd.read_csv(datanamehead+'sharpe_result.csv')
     successdf=pd.read_csv(datanamehead+'success_rate_result.csv')
@@ -166,7 +168,7 @@ def rankByWhiteResult(symbol,K_MIN,whiteWindows,datapath,resultpath):
         rank6df[month] = df['Rank6']
         rank7df[month] = df['Rank7']
         del df
-    resultnamehead = ("%s_%s_%d_win%d_" % (resultpath, symbol, K_MIN, whiteWindows))
+    resultnamehead = ("%s_%s_%s_%d_win%d_" % (resultpath, strategyName,symbol, K_MIN, whiteWindows))
     annualrankdf.to_csv(resultnamehead+'AnnualRank.csv')
     sharperankdf.to_csv(resultnamehead+'SharpeRank.csv')
     successrankdf.to_csv(resultnamehead+'SuccessRank.csv')
@@ -181,7 +183,7 @@ def rankByWhiteResult(symbol,K_MIN,whiteWindows,datapath,resultpath):
     print ('WhiteWindows:%d calculating rank result Finished!'% whiteWindows)
     print datetime.now()
 
-def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath):
+def calGrayResult(strategyName,symbol,K_MIN,windowsSet,rankpath,rawdatapath):
     '''
     根据排序结果，从月收益表中抽出各月收益，形成推进结果总收益
     :return:
@@ -199,7 +201,7 @@ def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath):
             #每个window进行遍历
             setlist=[groupcounter,targetName,whiteWindows]
             #retlist=[groupcounter,targetName,whiteWindows]
-            ranknamehead = ("%s_%s_%d_win%d_" % (rankpath, symbol, K_MIN, whiteWindows))
+            ranknamehead = ("%s_%s_%s_%d_win%d_" % (rankpath, strategyName,symbol, K_MIN, whiteWindows))
             rankdf=pd.read_csv(ranknamehead+targetName+'.csv',index_col='Setname')  #排名文件
             cols = rankdf.columns.tolist()[1:]
             colss=cols
@@ -219,10 +221,10 @@ def calGrayResult(symbol,K_MIN,windowsSet,rankpath,rawdatapath):
     #retresult=pd.DataFrame(resultlist,columns=columns)
     setresultdf= pd.DataFrame(setresultlist,columns=columns)
     #retresult.to_csv(rawdatapath+'ForwardOprAnalyze\\'+symbol+str(K_MIN)+'multiTargetForwardResult.csv')
-    setresultdf.to_csv(rawdatapath+'ForwardOprAnalyze\\'+symbol+str(K_MIN)+'multiTargetForwardSetname.csv')
+    setresultdf.to_csv(rawdatapath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+str(K_MIN)+'multiTargetForwardSetname.csv')
     pass
 
-def getOprlistByMonth(rawpath,symbol,K_MIN,setname,startmonth,endmonth,columns,filesuffix='result.csv'):
+def getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmonth,columns,filesuffix='result.csv'):
     '''
     根据setname和month，从result结果中取当月的操作集，并返回df
     :param setname:
@@ -240,18 +242,19 @@ def getOprlistByMonth(rawpath,symbol,K_MIN,setname,startmonth,endmonth,columns,f
     endtime = endmonth + '-01 00:00:00'
     startutc = float(time.mktime(time.strptime(starttime, "%b-%y-%d %H:%M:%S")))
     endutc = float(time.mktime(time.strptime(endtime, "%b-%y-%d %H:%M:%S")))
-    filename=("%s%d %s %s"%(symbol,K_MIN,setname,filesuffix))
+    filename=("%s %s%d %s %s"%(strategyName,symbol,K_MIN,setname,filesuffix))
     f=rawpath+filename
     oprdf=pd.read_csv(f)
     oprdf=oprdf.loc[(oprdf['openutc'] >= startutc) & (oprdf['openutc'] < endutc)]
     return oprdf[['opentime','openutc','openindex','openprice',closetime_col,closeutc_col,closeindex_col,closeprice_col,'tradetype',ret_col,retr_col]]
 
-def calOprResult(rawpath,symbol,K_MIN,nextmonth,columns,resultfilesuffix='result.csv'):
+def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positionRatio,initialCash,resultfilesuffix='result.csv'):
     '''
     根据灰区的取值，取出各灰区的操作列表，组成目标集组的操作表，并计算各个评价指标
     :return:
     '''
-    graydf=pd.read_csv(rawpath+'ForwardOprAnalyze\\'+symbol+str(K_MIN)+'multiTargetForwardSetname.csv',index_col='Group')
+    symbol=symbolinfo.symbol
+    graydf=pd.read_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+str(K_MIN)+'multiTargetForwardSetname.csv',index_col='Group')
     cols = graydf.columns.tolist()[3:]
     cols.append(nextmonth)
     groupResult = []
@@ -274,30 +277,13 @@ def calOprResult(rawpath,symbol,K_MIN,nextmonth,columns,resultfilesuffix='result
             oprdf=pd.concat([oprdf,getOprlistByMonth(rawpath,symbol,K_MIN,setname,startmonth,endmonth,columns,resultfilesuffix)])
 
         oprdf=oprdf.reset_index(drop=True)
-        margin_rate=0.2
-        commission_ratio = 0.00012
-        initial_cash = 20000
-        firsttradecash = initial_cash / margin_rate
-        oprdf['commission_fee'] = firsttradecash * commission_ratio * 2
-        oprdf['funcuve'] = firsttradecash
-        oprdf['per earn'] = 0  # 单笔盈亏
-        oprdf['own cash'] = 0  # 自有资金线
-        oprdf['trade money'] = 0  # 杠杆后的可交易资金线
-        oprdf['retrace rate'] = 0  # 回撤率
 
-        oprdf.ix[0, 'per earn'] = firsttradecash * oprdf.ix[0, retr_col]
-        oprdf.ix[0, 'own cash'] = initial_cash + oprdf.ix[0, 'per earn'] - oprdf.ix[0, 'commission_fee']
-        oprdf.ix[0, 'trade money'] = oprdf.ix[0, 'own cash'] / margin_rate
-        oprtimes = oprdf.shape[0]
-        for i in np.arange(1, oprtimes):
-            commission = oprdf.ix[i - 1, 'trade money'] * commission_ratio * 2
-            perearn = oprdf.ix[i - 1, 'trade money'] * oprdf.ix[i, retr_col]
-            owncash = oprdf.ix[i - 1, 'own cash'] + perearn - commission
-            oprdf.ix[i, 'own cash'] = owncash
-            oprdf.ix[i, 'commission_fee'] = commission
-            oprdf.ix[i, 'per earn'] = perearn
-            oprdf.ix[i, 'trade money'] = owncash / margin_rate
-        tofilename=('%s%d_%s_win%d_oprResult.csv'%(symbol,K_MIN,gray.Target,gray.Windows))
+        oprdf['commission_fee'], oprdf['per earn'], oprdf['own cash'], oprdf['hands'] = RS.calcResult(
+            oprdf,
+            symbolinfo,
+            initialCash,
+            positionRatio, ret_col)
+        tofilename=('%s %s%d_%s_win%d_oprResult.csv'%(strategyName,symbol,K_MIN,gray.Target,gray.Windows))
         oprdf.to_csv(rawpath+'ForwardOprAnalyze\\'+tofilename)
 
         annual = RS.annual_return(oprdf,cash_col='own cash',closeutc_col=closeutc_col)
@@ -307,7 +293,7 @@ def calOprResult(rawpath,symbol,K_MIN,nextmonth,columns,resultfilesuffix='result
         max_drawback,b,c = RS.max_drawback(oprdf,cash_col='own cash')
         max_successive_up,max_successive_down=RS.max_successive_up(oprdf,ret_col=ret_col)
         max_return,min_return = RS.max_period_return(oprdf,retr_col=retr_col)
-        endcash = oprdf.ix[oprtimes - 1, 'own cash']
+        endcash = oprdf['own cash'].iloc[-1]
         mincash = oprdf['own cash'].min()
         maxcash = oprdf['own cash'].max()
 
@@ -315,7 +301,7 @@ def calOprResult(rawpath,symbol,K_MIN,nextmonth,columns,resultfilesuffix='result
 
     groupResultDf=pd.DataFrame(groupResult,columns=['Group','Target','Windows','annual','sharpe','average_change','success_rate','drawback',
                                                     'max_successive_up','max_successive_down','max_return','min_return','endcash','mincash','maxcash'])
-    groupResultDf.to_csv(rawpath+'ForwardOprAnalyze\\'+symbol+'_'+str(K_MIN)+'_groupOprResult.csv')
+    groupResultDf.to_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+'_'+str(K_MIN)+'_groupOprResult.csv')
     pass
 
 def getColumnsName(new=True):
@@ -340,10 +326,10 @@ def getColumnsName(new=True):
         'ret_col': 'ret'
         }
 
-def runPara(whiteWindows,symbol,K_MIN,parasetlist,monthlist,rawdatapath,resultpath,rankpath,columns,filesuffix):
-    calWhiteResult(whiteWindows=whiteWindows, symbol=symbol, K_MIN=K_MIN, parasetlist=parasetlist,
+def runPara(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthlist,rawdatapath,resultpath,rankpath,columns,filesuffix):
+    calWhiteResult(strategyName=strategyName,whiteWindows=whiteWindows, symbolinfo=symbolinfo, K_MIN=K_MIN, parasetlist=parasetlist,
                        monthlist=monthlist, datapath=rawdatapath, resultpath=resultpath,columns=columns,filesuffix=filesuffix)
-    rankByWhiteResult(symbol=symbol, K_MIN=K_MIN, whiteWindows=whiteWindows, datapath=resultpath, resultpath=rankpath)
+    rankByWhiteResult(strategyName=strategyName,symbolinfo=symbolinfo, K_MIN=K_MIN, whiteWindows=whiteWindows, datapath=resultpath, resultpath=rankpath)
 
 if __name__ == '__main__':
     #参数配置

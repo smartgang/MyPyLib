@@ -199,7 +199,7 @@ def calcResult(result,symbolinfo,initialCash,positionRatio,ret_col='ret'):
         newresult.ix[0, 'commission_fee'] = cashPerHand * hands * poundgeRate * 2
     else:
         newresult.ix[0, 'commission_fee'] = hands * poundgeFee * 2
-    newresult.ix[0, 'per earn'] = newresult.ix[0, ret_col] * hands * multiplier
+    newresult.ix[0, 'per earn'] = newresult.ix[0, 'ret'] * hands * multiplier
     newresult.ix[0, 'own cash'] = initialCash + newresult.ix[0, 'per earn'] - newresult.ix[0, 'commission_fee']
     newresult.ix[0, 'hands'] = hands
 
@@ -215,7 +215,7 @@ def calcResult(result,symbolinfo,initialCash,positionRatio,ret_col='ret'):
         else:
             commission = hands * poundgeFee * 2
         newresult.ix[i,'commission_fee'] = commission
-        newresult.ix[i, 'per earn'] = newresult.ix[i, ret_col] * hands * multiplier
+        newresult.ix[i, 'per earn'] = newresult.ix[i, 'ret'] * hands * multiplier
         newresult.ix[i, 'own cash'] = lastOwnCash + newresult.ix[i, 'per earn'] - commission
         newresult.ix[i, 'hands'] = hands
 

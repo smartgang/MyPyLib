@@ -199,9 +199,10 @@ def getShortDrawbackByTick(bardf,stopTarget):
     return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
 
 
-def dslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder):
+def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder):
     print 'sl;', str(slTarget), ',setname:', setname
-    oprdf = pd.read_csv(symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    symbol=symbolInfo.symbol
+    oprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
     oprdf['new_closeprice'] = oprdf['closeprice']
     oprdf['new_closetime'] = oprdf['closetime']
     oprdf['new_closeindex'] = oprdf['closeindex']
@@ -246,53 +247,32 @@ def dslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder):
                 oprdf.ix[i, 'new_closeutc'] = utctime
                 worknum+=1
 
-    initial_cash = 20000
-    margin_rate = 0.2
-    commission_ratio = 0.00012
-    firsttradecash = initial_cash / margin_rate
+    slip = symbolInfo.getSlip()
     # 2017-12-08:加入滑点
     oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
     oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
-    oprdf['new_commission_fee'] = firsttradecash * commission_ratio * 2
-    oprdf['new_per earn'] = 0  # 单笔盈亏
-    oprdf['new_own cash'] = 0  # 自有资金线
-    oprdf['new_trade money'] = 0  # 杠杆后的可交易资金线
-    oprdf['new_retrace rate'] = 0  # 回撤率
-
-    oprdf.ix[0, 'new_per earn'] = firsttradecash * oprdf.ix[0, 'new_ret_r']
-    maxcash = initial_cash + oprdf.ix[0, 'new_per earn'] - oprdf.ix[0, 'new_commission_fee']
-    oprdf.ix[0, 'new_own cash'] = maxcash
-    oprdf.ix[0, 'new_trade money'] = oprdf.ix[0, 'new_own cash'] / margin_rate
-    oprtimes = oprdf.shape[0]
-    for i in np.arange(1, oprtimes):
-        commission = oprdf.ix[i - 1, 'new_trade money'] * commission_ratio * 2
-        perearn = oprdf.ix[i - 1, 'new_trade money'] * oprdf.ix[i, 'new_ret_r']
-        owncash = oprdf.ix[i - 1, 'new_own cash'] + perearn - commission
-        maxcash = max(maxcash, owncash)
-        retrace_rate = (maxcash - owncash) / maxcash
-        oprdf.ix[i, 'new_own cash'] = owncash
-        oprdf.ix[i, 'new_commission_fee'] = commission
-        oprdf.ix[i, 'new_per earn'] = perearn
-        oprdf.ix[i, 'new_trade money'] = owncash / margin_rate
-        oprdf.ix[i, 'new_retrace rate'] = retrace_rate
+    oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,
+                                                                                                      symbolInfo,
+                                                                                                      initialCash,
+                                                                                                      positionRatio,ret_col='new_ret')
     #保存新的result文档
-    oprdf.to_csv(tofolder+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
+    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
 
     #计算统计结果
-    oldendcash = oprdf.ix[oprnum - 1, 'own cash']
+    oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
     oldDrawBack = RS.max_drawback(oprdf)[0]
     oldSR = RS.success_rate(oprdf)
-    newendcash = oprdf.ix[oprnum - 1, 'new_own cash']
+    newendcash = oprdf['new_own cash'].iloc[-1]
     newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
     newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
     newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
-    max_retrace_rate = oprdf['new_retrace rate'].max()
+    #max_retrace_rate = oprdf['new_retrace rate'].max()
     del oprdf
-    return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate,max_retrace_rate]
+    return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
 
 #======================================================================================
 def fastDslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder):
