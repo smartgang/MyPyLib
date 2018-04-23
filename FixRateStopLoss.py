@@ -21,7 +21,7 @@ def getLongFixRateLossByTick(bardf,openprice,fixRate):
     df['lossRate']=df['low']/openprice-1
     df2=df.loc[df['lossRate']<=fixRate]
     if df2.shape[0]>0:
-        temp=df2.loc[0]
+        temp=df2.iloc[0]
         newcloseprice = temp['low']
         strtime = temp['strtime']
         utctime = temp['utc_time']
@@ -40,7 +40,7 @@ def getShortFixRateLossByTick(bardf,openprice,fixRate):
     df['lossRate']=1-df['high']/openprice
     df2=df.loc[df['lossRate']<=fixRate]
     if df2.shape[0]>0:
-        temp=df2.loc[0]
+        temp=df2.iloc[0]
         newcloseprice = temp['high']
         strtime = temp['strtime']
         utctime = temp['utc_time']
@@ -121,7 +121,7 @@ def frslCalRealTick(strategyName,symbol,K_MIN,setname,ticksupplier,barxm,fixRate
     oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
     oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
     oprdf['retdelta'] = oprdf['new_ret'] - oprdf['ret']
-    oprdf.to_csv(tofolder + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_realtick.csv')
+    oprdf.to_csv(tofolder + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_realtick.csv')
 
 #================================================================================================
 def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRatio,initialCash,tofolder):
@@ -171,7 +171,7 @@ def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRa
                                                                                                       initialCash,
                                                                                                       positionRatio,ret_col='new_ret')
     #保存新的result文档
-    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
+    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_tick.csv')
 
     #计算统计结果
     oldendcash = oprdf['own cash'].iloc[-1]

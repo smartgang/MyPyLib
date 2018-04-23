@@ -14,7 +14,7 @@ from OnceWinNoLoss import  *
 def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,positionRatio,initialCash,tofolder):
     print 'setname:', setname
     symbol=symbolInfo.symbol
-    oprdf = pd.read_csv(symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
     oprlist=[]
     sltnum=len(stopLossTargetDictList)
     for i in range(sltnum):
