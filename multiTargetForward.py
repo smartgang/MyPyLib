@@ -274,7 +274,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
             startmonth=cols[l]
             endmonth=cols[l+1]
             setname=gray[startmonth]
-            oprdf=pd.concat([oprdf,getOprlistByMonth(rawpath,symbol,K_MIN,setname,startmonth,endmonth,columns,resultfilesuffix)])
+            oprdf=pd.concat([oprdf,getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmonth,columns,resultfilesuffix)])
 
         oprdf=oprdf.reset_index(drop=True)
 
