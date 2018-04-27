@@ -331,6 +331,84 @@ def runPara(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthlist,raw
                        monthlist=monthlist, datapath=rawdatapath, resultpath=resultpath,columns=columns,filesuffix=filesuffix)
     rankByWhiteResult(strategyName=strategyName,symbolinfo=symbolinfo, K_MIN=K_MIN, whiteWindows=whiteWindows, datapath=resultpath, resultpath=rankpath)
 
+
+#def getForward(strategyName,symbolinfo,K_MIN,parasetlist,rawdatapath,startdate,enddate,nextmonth,windowsSet,colslist,positionRatio,initialCash,resultfilesuffix):
+def  getMonthParameter(strategyName,startmonth,endmonth,symbolinfo,K_MIN,parasetlist,oprresultpath,columns,resultfilesuffix):
+    '''
+    根据输出参数计算目标月份应该使用的参数集
+    :param month: 目标月份
+    :param ranktarget: 评价纬度
+    :param windowns: 窗口大小
+    :param oprresultpath:
+    :param targetpath:
+    :return:
+    '''
+    print ('Calculating month parameters,start from %s to %s' % (startmonth,endmonth))
+    symbol=symbolinfo.symbol
+    parasetlen = parasetlist.shape[0]
+    closeutc_col = columns['closeutc_col']
+    retr_col = columns['retr_col']
+    ret_col = columns['ret_col']
+    cash_col =columns['cash_col']
+    annual_list = []
+    sharpe_list= []
+    success_rate_list = []
+    drawback_list = []
+    set_list=[]
+    for i in np.arange(0, parasetlen):
+        setname = parasetlist.ix[i, 'Setname']
+        print setname
+        filename = oprresultpath + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + resultfilesuffix
+        resultdf = pd.read_csv(filename)
+        starttime = startmonth+ '-01 00:00:00'
+        endtime = endmonth + '-01 00:00:00'
+        startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
+        endutc = float(time.mktime(time.strptime(endtime, "%Y-%m-%d %H:%M:%S")))
+        resultdata = resultdf.loc[(resultdf['openutc'] >= startutc) & (resultdf['openutc'] < endutc)]
+        resultdata = resultdata.reset_index(drop=True)
+        annual_list.append(RS.annual_return(resultdata, cash_col=cash_col, closeutc_col=closeutc_col))
+        sharpe_list.append(RS.sharpe_ratio(resultdata, cash_col=cash_col, closeutc_col=closeutc_col, retr_col=retr_col))
+        success_rate_list.append(RS.success_rate(resultdata, ret_col=ret_col))
+        drawback, a, b = RS.max_drawback(resultdata, cash_col=cash_col)
+        drawback_list.append(drawback)
+        set_list.append(setname)
+        # print('annual:%f.2,sharpe:%f.2,success_rate:%f.2,drawback:%f.2'%(annual,sharpe,success_rate,drawback))
+    df = pd.DataFrame(set_list, columns=['Setname'])
+    df['Annual']=annual_list
+    df['Sharpe']=sharpe_list
+    df['SuccessRate']=success_rate_list
+    df['DrawBack']=drawback_list
+
+    rangarray = range(df.shape[0], 0, -1)
+    df = df.sort_values(by='Annual', ascending=False)
+    df['AnnualRank']=0
+    df['AnnualRank'] += rangarray
+    df = df.sort_values(by='Sharpe', ascending=False)
+    df['SharpeRank']=0
+    df['SharpeRank'] += rangarray
+    df = df.sort_values(by='SuccessRate', ascending=False)
+    df['SuccessRank']=0
+    df['SuccessRank'] += rangarray
+    df = df.sort_values(by='DrawBack', ascending=False)
+    df['DrawbackRank']=0
+    df['DrawbackRank'] += rangarray
+
+    df = df.sort_values(by='Setname', ascending=True)
+    df['Rank1'] = df['AnnualRank']  # 目标集1：年化收益
+    df['Rank2'] = df['SharpeRank']  # 目标集2：夏普值
+    df['Rank3'] = df['AnnualRank'] * 0.6 + df['DrawbackRank'] * 0.4  # 目标集3：年化收益*0.6+最大回撤*0.4
+    df['Rank4'] = df['SharpeRank'] * 0.6 + df['DrawbackRank'] * 0.4  # 目标集4：夏普*0.6+最大回撤*0.4
+    df['Rank5'] = df['AnnualRank'] * 0.4 + df['SharpeRank'] * 0.3 + \
+                  df['SuccessRank'] * 0.1 + df['DrawbackRank'] * 0.2  # 目标集5：4目标综合
+    df['Rank6'] = df['SuccessRank']
+    df['Rank7'] = df['SuccessRank'] * 0.5 + df['AnnualRank'] * 0.5
+
+    return df
+    #filenamehead = ("%s_%s_%d_%s_parameter" % (targetpath, symbol, K_MIN, endmonth))
+    #df.to_csv(filenamehead + '.csv')
+    print ('Calculating month parameters Finished! From %s to %s' % (startmonth, endmonth))
+    #print datetime.now()
+
 if __name__ == '__main__':
     #参数配置
     exchange_id = 'SHFE'
