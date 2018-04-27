@@ -216,7 +216,7 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
     ownldf=pd.read_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
     ownloprnum = ownldf.shape[0]
     if orioprnum>ownloprnum:
-        oprdf=orioprdf.iloc[ownloprnum:]
+        oprdf=orioprdf.loc[ownloprnum:]
         oprdf['new_closeprice'] = oprdf['closeprice']
         oprdf['new_closetime'] = oprdf['closetime']
         oprdf['new_closeindex'] = oprdf['closeindex']

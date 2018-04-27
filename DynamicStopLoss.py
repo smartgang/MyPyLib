@@ -291,7 +291,7 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
     dsldf = pd.read_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
     dsloprnum=dsldf.shape[0]
     if orioprnum>dsloprnum:
-        oprdf=orioprdf.iloc[dsloprnum:]
+        oprdf=orioprdf.loc[dsloprnum:]
         oprdf['new_closeprice'] = oprdf['closeprice']
         oprdf['new_closetime'] = oprdf['closetime']
         oprdf['new_closeindex'] = oprdf['closeindex']
