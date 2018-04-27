@@ -289,9 +289,11 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
     orioprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
     orioprnum = orioprdf.shape[0]
     dsldf = pd.read_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
+    dsldf.drop('Unnamed: 0.1',axis=1,inplace=True)
     dsloprnum=dsldf.shape[0]
+    oprdf=dsldf
     if orioprnum>dsloprnum:
-        oprdf=orioprdf.loc[dsloprnum:]
+        oprdf=orioprdf.loc[dsloprnum:,:]
         oprdf['new_closeprice'] = oprdf['closeprice']
         oprdf['new_closetime'] = oprdf['closetime']
         oprdf['new_closeindex'] = oprdf['closeindex']
@@ -300,8 +302,8 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
         oprdf['min_opr_gain'] = 0#本次操作期间的最小收益
         oprdf['max_dd'] = 0
         oprnum=oprdf.shape[0]
-        for i in range(oprnum):
-            opr = oprdf.iloc[i]
+        for i in range(dsloprnum,orioprnum):
+            opr = oprdf.loc[i]
             startutc = (barxm.loc[barxm['utc_time'] == opr.openutc]).iloc[0].utc_endtime - 60#从开仓的10m线结束后开始
             endutc = (barxm.loc[barxm['utc_time'] == opr.closeutc]).iloc[0].utc_endtime#一直到平仓的10m线结束
             oprtype = opr.tradetype
@@ -337,6 +339,10 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
         # 2017-12-08:加入滑点
         oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
         oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
+        oprdf['new_commission_fee']=0
+        oprdf['new_per earn']=0
+        oprdf['new_own cash']=0
+        oprdf['new_hands'] = 0
         oprdf=pd.concat([dsldf,oprdf])
 
         oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,

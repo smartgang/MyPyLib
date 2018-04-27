@@ -214,15 +214,19 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
     orioprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
     orioprnum = orioprdf.shape[0]
     ownldf=pd.read_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
-    ownloprnum = ownldf.shape[0]
+    ownldf.drop('Unnamed: 0.1',axis=1,inplace=True)
+    ownloprnum=ownldf.shape[0]
+    oprdf=ownldf
     if orioprnum>ownloprnum:
-        oprdf=orioprdf.loc[ownloprnum:]
+        oprdf=orioprdf.loc[ownloprnum:,:]
         oprdf['new_closeprice'] = oprdf['closeprice']
         oprdf['new_closetime'] = oprdf['closetime']
         oprdf['new_closeindex'] = oprdf['closeindex']
         oprdf['new_closeutc'] = oprdf['closeutc']
-        oprnum = oprdf.shape[0]
-        for i in range(oprnum):
+        oprdf['max_opr_gain'] = 0 #本次操作期间的最大收益
+        oprdf['min_opr_gain'] = 0#本次操作期间的最小收益
+        oprdf['max_dd'] = 0
+        for i in range(ownloprnum,orioprnum):
             opr = oprdf.iloc[i]
             startutc = (barxm.loc[barxm['utc_time'] == opr.openutc]).iloc[0].utc_endtime - 60#从开仓的10m线结束后开始
             endutc = (barxm.loc[barxm['utc_time'] == opr.closeutc]).iloc[0].utc_endtime#一直到平仓的10m线结束
@@ -248,6 +252,10 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
         # 2017-12-08:加入滑点
         oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
         oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
+        oprdf['new_commission_fee']=0
+        oprdf['new_per earn']=0
+        oprdf['new_own cash']=0
+        oprdf['new_hands'] = 0
         oprdf=pd.concat([ownldf,oprdf])
         oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,
                                                                                                           symbolInfo,
@@ -270,7 +278,9 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     #max_retrace_rate = oprdf['new_retrace rate'].max()
-
+    del oprdf
+    del orioprdf
+    del ownldf
     return [setname,winSwitch,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
 
 if __name__ == '__main__':
