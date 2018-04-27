@@ -227,7 +227,7 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
         oprdf['min_opr_gain'] = 0#本次操作期间的最小收益
         oprdf['max_dd'] = 0
         for i in range(ownloprnum,orioprnum):
-            opr = oprdf.iloc[i]
+            opr = oprdf.loc[i]
             startutc = (barxm.loc[barxm['utc_time'] == opr.openutc]).iloc[0].utc_endtime - 60#从开仓的10m线结束后开始
             endutc = (barxm.loc[barxm['utc_time'] == opr.closeutc]).iloc[0].utc_endtime#一直到平仓的10m线结束
             oprtype = opr.tradetype
