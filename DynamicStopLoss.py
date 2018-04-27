@@ -274,6 +274,97 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionR
     del oprdf
     return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
 
+
+def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder):
+    '''
+    增量式止损
+    1.读取现有的止损文件，读取操作文件
+    2.对比两者长度，取操作文件超出的部分，作为新操作列表
+    3.对新操作列表进行止损操作
+    4.将新止损结果合入原止损结果中，重新计算统计结果
+    5.保存文件，返回结果
+    '''
+    print 'sl;', str(slTarget), ',setname:', setname
+    symbol=symbolInfo.symbol
+    orioprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    orioprnum = orioprdf.shape[0]
+    dsldf = pd.read_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
+    dsloprnum=dsldf.shape[0]
+    if orioprnum>dsloprnum:
+        oprdf=orioprdf.iloc[dsloprnum:]
+        oprdf['new_closeprice'] = oprdf['closeprice']
+        oprdf['new_closetime'] = oprdf['closetime']
+        oprdf['new_closeindex'] = oprdf['closeindex']
+        oprdf['new_closeutc'] = oprdf['closeutc']
+        oprdf['max_opr_gain'] = 0 #本次操作期间的最大收益
+        oprdf['min_opr_gain'] = 0#本次操作期间的最小收益
+        oprdf['max_dd'] = 0
+        oprnum=oprdf.shape[0]
+        for i in range(oprnum):
+            opr = oprdf.iloc[i]
+            startutc = (barxm.loc[barxm['utc_time'] == opr.openutc]).iloc[0].utc_endtime - 60#从开仓的10m线结束后开始
+            endutc = (barxm.loc[barxm['utc_time'] == opr.closeutc]).iloc[0].utc_endtime#一直到平仓的10m线结束
+            oprtype = opr.tradetype
+            openprice = opr.openprice
+            data1m = bar1m.loc[(bar1m['utc_time'] >= startutc) & (bar1m['utc_time'] < endutc)]
+            if oprtype == 1:
+                # 多仓，取最大回撤，max为最大收益，min为最小收益
+                max_dd, dd_close, maxprice, strtime, utctime, timeindex = getLongDrawbackByTick(data1m, slTarget)
+                oprdf.ix[i, 'max_opr_gain'] = (data1m.high.max() - openprice) / openprice#1min用close,tick用high和low
+                oprdf.ix[i, 'min_opr_gain'] = (data1m.low.min() - openprice) / openprice
+                oprdf.ix[i, 'max_dd'] = max_dd
+                if max_dd <= slTarget:
+                    ticknum = round((maxprice * slTarget) / pricetick, 0) - 1
+                    oprdf.ix[i, 'new_closeprice'] = maxprice + ticknum * pricetick
+                    oprdf.ix[i, 'new_closetime'] = strtime
+                    oprdf.ix[i, 'new_closeindex'] = timeindex
+                    oprdf.ix[i, 'new_closeutc'] = utctime
+
+            else:
+                # 空仓，取逆向最大回撤，min为最大收益，max为最小收闪
+                max_dd, dd_close, minprice, strtime, utctime, timeindex = getShortDrawbackByTick(data1m, slTarget)
+                oprdf.ix[i, 'max_opr_gain'] = (openprice - data1m.low.min()) / openprice
+                oprdf.ix[i, 'min_opr_gain'] = (openprice - data1m.high.max()) / openprice
+                oprdf.ix[i, 'max_dd'] = max_dd
+                if max_dd <= slTarget:
+                    ticknum = round((minprice * slTarget) / pricetick, 0) - 1
+                    oprdf.ix[i, 'new_closeprice'] = minprice - ticknum * pricetick
+                    oprdf.ix[i, 'new_closetime'] = strtime
+                    oprdf.ix[i, 'new_closeindex'] = timeindex
+                    oprdf.ix[i, 'new_closeutc'] = utctime
+
+        slip = symbolInfo.getSlip()
+        # 2017-12-08:加入滑点
+        oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
+        oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
+        oprdf=pd.concat([dsldf,oprdf])
+
+        oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,
+                                                                                                          symbolInfo,
+                                                                                                          initialCash,
+                                                                                                          positionRatio,ret_col='new_ret')
+        #保存新的result文档
+        oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
+
+    #计算统计结果
+    worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
+    oldendcash = oprdf['own cash'].iloc[-1]
+    oldAnnual = RS.annual_return(oprdf)
+    oldSharpe = RS.sharpe_ratio(oprdf)
+    oldDrawBack = RS.max_drawback(oprdf)[0]
+    oldSR = RS.success_rate(oprdf)
+    newendcash = oprdf['new_own cash'].iloc[-1]
+    newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
+    newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
+    newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
+    newSR = RS.success_rate(oprdf,ret_col='new_ret')
+    max_single_loss_rate = abs(oprdf['new_ret_r'].min())
+    #max_retrace_rate = oprdf['new_retrace rate'].max()
+    del oprdf
+    del orioprdf
+    del dsldf
+    return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+
 #======================================================================================
 def fastDslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder):
     #快速动态止损
