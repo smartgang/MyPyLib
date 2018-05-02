@@ -50,8 +50,8 @@ def calWhiteResult(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthl
         for i in range(12,len(monthlist)-1):#修改为从第13个月开始
             whiteWindowsStart=monthlist[i-whiteWindows]+'-01 00:00:00'
             whiteWindowsEnd=monthlist[i]+'-01 00:00:00'#从取end月份的1日，表示的是i-1个月的数据
-            startutc=float(time.mktime(time.strptime(whiteWindowsStart,"%b-%y-%d %H:%M:%S")))
-            endutc=float(time.mktime(time.strptime(whiteWindowsEnd,"%b-%y-%d %H:%M:%S")))
+            startutc=float(time.mktime(time.strptime(whiteWindowsStart,"%Y-%m-%d %H:%M:%S")))
+            endutc=float(time.mktime(time.strptime(whiteWindowsEnd,"%Y-%m-%d %H:%M:%S")))
             resultdata=resultdf.loc[(resultdf['openutc']>=startutc) & (resultdf['openutc']<endutc)]
             if resultdata.shape[0]>0:
                 resultdata=resultdata.reset_index(drop=True)
@@ -240,8 +240,8 @@ def getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmo
 
     starttime = startmonth + '-01 00:00:00'
     endtime = endmonth + '-01 00:00:00'
-    startutc = float(time.mktime(time.strptime(starttime, "%b-%y-%d %H:%M:%S")))
-    endutc = float(time.mktime(time.strptime(endtime, "%b-%y-%d %H:%M:%S")))
+    startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
+    endutc = float(time.mktime(time.strptime(endtime, "%Y-%m-%d %H:%M:%S")))
     filename=("%s %s%d %s %s"%(strategyName,symbol,K_MIN,setname,filesuffix))
     f=rawpath+filename
     oprdf=pd.read_csv(f)
@@ -402,11 +402,11 @@ def  getMonthParameter(strategyName,startmonth,endmonth,symbolinfo,K_MIN,paraset
                   df['SuccessRank'] * 0.1 + df['DrawbackRank'] * 0.2  # 目标集5：4目标综合
     df['Rank6'] = df['SuccessRank']
     df['Rank7'] = df['SuccessRank'] * 0.5 + df['AnnualRank'] * 0.5
-
+    print ('Calculating month parameters Finished! From %s to %s' % (startmonth, endmonth))
     return df
     #filenamehead = ("%s_%s_%d_%s_parameter" % (targetpath, symbol, K_MIN, endmonth))
     #df.to_csv(filenamehead + '.csv')
-    print ('Calculating month parameters Finished! From %s to %s' % (startmonth, endmonth))
+
     #print datetime.now()
 
 if __name__ == '__main__':
