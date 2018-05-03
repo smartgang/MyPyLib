@@ -19,7 +19,7 @@ import pandas as pd
 from pandas import Series
 from datetime import date
 
-def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc'):
+def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc',openutc_col='openutc'):
     '''
     计算年化收益
     :param resultdf:包含所有操作结果
@@ -29,20 +29,20 @@ def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc'):
     oprnum=resultdf.shape[0]
     startcash=resultdf.ix[0,cash_col]
     #startcash=20000
-    startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
+    startdate=date.fromtimestamp(resultdf.ix[0,openutc_col])
     endcash=resultdf.ix[oprnum-1,cash_col]
     enddate=date.fromtimestamp(resultdf.ix[oprnum-1,closeutc_col])
     datenum=float((enddate-startdate).days)+1
     return pow(endcash/startcash,250/datenum)-1
 
-def max_drawback(resultdf,cash_col='own cash'):
+def max_drawback(resultdf,cash_col='own cash',opentime_col='opentime'):
     '''
     最大回撤
     :param resultdf:
     公式：最大回撤就是从一个高点到一个低点最大的下跌幅度
     :return:
     '''
-    df=pd.DataFrame({'date':resultdf.opentime,'capital':resultdf[cash_col]})
+    df=pd.DataFrame({'date':resultdf[opentime_col],'capital':resultdf[cash_col]})
 
     #df['max2here']=pd.expanding_max(df['capital'])
     df['max2here']=df['capital'].expanding().max()
@@ -130,7 +130,7 @@ def beta(resultdf,benchmart_rtn):
     b=resultdf.ret_r.cov(benchmart_rtn)/benchmart_rtn.var()
     return b
 
-def sharpe_ratio(resultdf,cash_col='own cash',closeutc_col='closeutc',retr_col='ret_r'):
+def sharpe_ratio(resultdf,cash_col='own cash',closeutc_col='closeutc',retr_col='ret_r',openutc_col='openutc'):
     '''
     计算夏普比率:（账户年化收益率-无风险利率）/ 收益波动率。
     :param resultdf:
@@ -143,7 +143,7 @@ def sharpe_ratio(resultdf,cash_col='own cash',closeutc_col='closeutc',retr_col='
     oprnum=resultdf.shape[0]
     startcash=resultdf.ix[0,cash_col]
     #startcash=20000
-    startdate=date.fromtimestamp(resultdf.ix[0,'openutc'])
+    startdate=date.fromtimestamp(resultdf.ix[0,openutc_col])
     endcash=resultdf.ix[oprnum-1,cash_col]
     enddate=date.fromtimestamp(resultdf.ix[oprnum-1,closeutc_col])
     datenum=float((enddate-startdate).days)+1
