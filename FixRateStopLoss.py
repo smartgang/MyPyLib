@@ -190,5 +190,87 @@ def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRa
     return [setname,fixRate,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
 
 
+#================================================================================================
+def progressFrslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRatio,initialCash,tofolder):
+    '''
+    增量式止损
+    '''
+    print 'frsl;', str(fixRate), ',setname:', setname
+    symbol=symbolInfo.symbol
+    pricetick=symbolInfo.getPriceTick()
+    orioprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    orioprnum = orioprdf.shape[0]
+    frsldf=pd.read_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_tick.csv')
+    frsldf.drop('Unnamed: 0.1',axis=1,inplace=True)
+    frsloprnum=frsldf.shape[0]
+    oprdf=frsldf
+    if orioprnum>frsloprnum:
+        oprdf=orioprdf.loc[frsloprnum:,:]
+        oprdf['new_closeprice'] = oprdf['closeprice']
+        oprdf['new_closetime'] = oprdf['closetime']
+        oprdf['new_closeindex'] = oprdf['closeindex']
+        oprdf['new_closeutc'] = oprdf['closeutc']
+        oprdf['max_opr_gain'] = 0 #本次操作期间的最大收益
+        oprdf['min_opr_gain'] = 0#本次操作期间的最小收益
+        oprdf['max_dd'] = 0
+        for i in range(frsloprnum,orioprnum):
+            opr = oprdf.loc[i]
+            startutc = (barxm.loc[barxm['utc_time'] == opr.openutc]).iloc[0].utc_endtime - 60#从开仓的10m线结束后开始
+            endutc = (barxm.loc[barxm['utc_time'] == opr.closeutc]).iloc[0].utc_endtime#一直到平仓的10m线结束
+            oprtype = opr.tradetype
+            openprice = opr.openprice
+            data1m = bar1m.loc[(bar1m['utc_time'] > startutc) & (bar1m['utc_time'] < endutc)]
+            if oprtype == 1:
+                newcloseprice, strtime, utctime, timeindex = getLongFixRateLossByTick(data1m,openprice,fixRate)
+                if newcloseprice !=0:
+                    ticknum = (openprice * fixRate // pricetick) - 1
+                    oprdf.ix[i, 'new_closeprice'] = openprice + ticknum * pricetick
+                    oprdf.ix[i, 'new_closetime'] = strtime
+                    oprdf.ix[i, 'new_closeindex'] = timeindex
+                    oprdf.ix[i, 'new_closeutc'] = utctime
+            else:
+                newcloseprice, strtime, utctime, timeindex = getShortFixRateLossByTick(data1m, openprice, fixRate)
+                if newcloseprice != 0:
+                    ticknum = (openprice * fixRate // pricetick) - 1
+                    oprdf.ix[i, 'new_closeprice'] = openprice - ticknum * pricetick
+                    oprdf.ix[i, 'new_closetime'] = strtime
+                    oprdf.ix[i, 'new_closeindex'] = timeindex
+                    oprdf.ix[i, 'new_closeutc'] = utctime
+
+        slip=symbolInfo.getSlip()
+        # 2017-12-08:加入滑点
+        oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
+        oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
+        oprdf['new_commission_fee']=0
+        oprdf['new_per earn']=0
+        oprdf['new_own cash']=0
+        oprdf['new_hands'] = 0
+        oprdf=pd.concat([frsldf,oprdf])
+        oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,
+                                                                                                          symbolInfo,
+                                                                                                          initialCash,
+                                                                                                          positionRatio,ret_col='new_ret')
+        #保存新的result文档
+        oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_tick.csv')
+
+    #计算统计结果
+    worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
+    oldendcash = oprdf['own cash'].iloc[-1]
+    oldAnnual = RS.annual_return(oprdf)
+    oldSharpe = RS.sharpe_ratio(oprdf)
+    oldDrawBack = RS.max_drawback(oprdf)[0]
+    oldSR = RS.success_rate(oprdf)
+    newendcash = oprdf['new_own cash'].iloc[-1]
+    newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
+    newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
+    newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
+    newSR = RS.success_rate(oprdf,ret_col='new_ret')
+    max_single_loss_rate = abs(oprdf['new_ret_r'].min())
+    #max_retrace_rate = oprdf['new_retrace rate'].max()
+    del oprdf
+    del orioprdf
+    del frsldf
+    return [setname,fixRate,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+
 if __name__ == '__main__':
     pass
