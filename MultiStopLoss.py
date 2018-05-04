@@ -86,7 +86,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
                                                                                                       symbolInfo,
                                                                                                       initialCash,
                                                                                                       positionRatio,ret_col='new_ret')
-    oprdf.to_csv(tofolder+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv')
+    oprdf.to_csv(tofolder+'\\'+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv')
 
     #计算统计结果
     oldendcash = oprdf['own cash'].iloc[-1]
@@ -100,7 +100,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
-    return [setname,slWorkNum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR]
+    return [setname,tofolder,slWorkNum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR]
 
 
 if __name__ == '__main__':
