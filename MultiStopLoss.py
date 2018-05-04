@@ -27,6 +27,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
         oprdf[sltName+'_closeindex'] = sltdf['new_closeindex']
         oprdf[sltName+'_closeutc'] = sltdf['new_closeutc']
         oprdf[sltName+'_ret'] = sltdf['new_ret']
+        oprdf[sltName+'_own cash'] = sltdf['new_own cash']
         oprlist.append(sltdf)
     #dsloprname=stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv'
     #ownloprname=stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv'
@@ -37,15 +38,32 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     oprdf['new_closetime'] = oprdf['closetime']
     oprdf['new_closeindex'] = oprdf['closeindex']
     oprdf['new_closeutc'] = oprdf['closeutc']
-    oprdf['min_closeutc']=oprdf['closeutc']
+    oprdf['min_closeutc'] = oprdf['closeutc']
+    oprdf['max_closeutc'] = oprdf['closeutc']
     for i in range(sltnum):
         #先取最早平仓的时间，再根据时间去匹配类型
         slt=stopLossTargetDictList[i]
         utcname=slt['name']+'_closeutc'
-        oprdf['min_closeutc']=oprdf['min_closeutc',utcname].min(axis=1)
+        oprdf['min_closeutc']=oprdf.loc[:,['min_closeutc',utcname]].min(axis=1)
+        oprdf['max_closeutc']=oprdf.loc[:,['max_closeutc',utcname]].max(axis=1)
     #根据最早平仓时间的结果，匹配平仓类型,不处理时间相同的情况
     oprdf['closetype']='Normal'
+    oprdf.loc[oprdf['max_closeutc']!=oprdf['closeutc'],'min_closeutc'] = oprdf['max_closeutc']
     for i in range(sltnum):
+        slt=stopLossTargetDictList[i]
+        name=slt['name']
+        utcname= name + '_closeutc'
+        utcnamebuf = name + '_closeutc_buf'
+        oprdf[utcnamebuf]= oprdf[utcname]
+        oprdf.loc[(oprdf['max_closeutc']!=oprdf['closeutc']) & (oprdf[utcname]==oprdf['closeutc']),utcnamebuf]=oprdf['max_closeutc']
+    for i in range(sltnum):
+        #先取最早平仓的时间，再根据时间去匹配类型
+        slt=stopLossTargetDictList[i]
+        utcnamebuf = name + '_closeutc_buf'
+        oprdf['min_closeutc']=oprdf.loc[:,['min_closeutc',utcnamebuf]].min(axis=1)
+    for i in range(sltnum):
+        #先按与最小相同的标识名称，因为止损文件中没有生效的操作的值与原值相同
+        #所以标识完后剩下的Normal就是原时间比止损时间早的值（也就是使用最小值匹配不出来的值，需要特殊处理）
         slt=stopLossTargetDictList[i]
         name=slt['name']
         utcname=name+'_closeutc'
@@ -55,6 +73,11 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
         oprdf.loc[oprdf['min_closeutc']==oprdf[utcname],'new_closeindex'] = oprdf[name+'_closeindex']
         oprdf.loc[oprdf['min_closeutc']==oprdf[utcname],'new_closeutc'] = oprdf[name+'_closeutc']
 
+        oprdf.drop(name+'_closeutc_buf',axis=1,inplace=True)#删掉buf列
+    #标识正常止损
+    oprdf.loc[oprdf['min_closeutc'] == oprdf['closeutc'], 'closetype'] = 'Normal'
+    oprdf.drop('min_closeutc',axis=1,inplace=True)
+    oprdf.drop('max_closeutc',axis=1,inplace=True)
     slip=symbolInfo.getSlip()
     # 2017-12-08:加入滑点
     oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
