@@ -124,7 +124,7 @@ def frslCalRealTick(strategyName,symbol,K_MIN,setname,ticksupplier,barxm,fixRate
     oprdf.to_csv(tofolder + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_realtick.csv')
 
 #================================================================================================
-def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRatio,initialCash,tofolder):
+def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRatio,initialCash,tofolder,indexcols):
     print 'frsl;', str(fixRate), ',setname:', setname
     symbol=symbolInfo.symbol
     pricetick=symbolInfo.getPriceTick()
@@ -174,6 +174,9 @@ def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRa
     oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_tick.csv')
 
     #计算统计结果
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    '''
     oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
@@ -188,10 +191,13 @@ def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRa
     #max_retrace_rate = oprdf['new_retrace rate'].max()
 
     return [setname,fixRate,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
-
+    '''
+    del oprdf
+    #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    return [setname,fixRate,worknum]+oldr+newr
 
 #================================================================================================
-def progressFrslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRatio,initialCash,tofolder):
+def progressFrslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRatio,initialCash,tofolder,indexcols):
     '''
     增量式止损
     '''
@@ -255,6 +261,9 @@ def progressFrslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,po
 
     #计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    '''
     oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
@@ -271,6 +280,10 @@ def progressFrslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,po
     del orioprdf
     del frsldf
     return [setname,fixRate,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
-
+    '''
+    del oprdf
+    del orioprdf
+    del frsldf
+    return [setname, fixRate, worknum] + oldr + newr
 if __name__ == '__main__':
     pass

@@ -248,7 +248,7 @@ def getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmo
     oprdf=oprdf.loc[(oprdf['openutc'] >= startutc) & (oprdf['openutc'] < endutc)]
     return oprdf[['opentime','openutc','openindex','openprice',closetime_col,closeutc_col,closeindex_col,closeprice_col,'tradetype',ret_col,retr_col]]
 
-def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positionRatio,initialCash,resultfilesuffix='result.csv'):
+def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positionRatio,initialCash,indexcols,indexcolsFlag,resultfilesuffix='result.csv'):
     '''
     根据灰区的取值，取出各灰区的操作列表，组成目标集组的操作表，并计算各个评价指标
     :return:
@@ -264,6 +264,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
     closeutc_col = columns['closeutc_col']
     retr_col = columns['retr_col']
     ret_col = columns['ret_col']
+    cash_col = columns['cash_col']
 
     for i in range(graydf.shape[0]):
         gray=graydf.iloc[i]
@@ -278,7 +279,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
 
         oprdf=oprdf.reset_index(drop=True)
 
-        oprdf['commission_fee'], oprdf['per earn'], oprdf['own cash'], oprdf['hands'] = RS.calcResult(
+        oprdf['commission_fee'], oprdf['per earn'], oprdf[cash_col], oprdf['hands'] = RS.calcResult(
             oprdf,
             symbolinfo,
             initialCash,
@@ -286,6 +287,8 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
         tofilename=('%s %s%d_%s_win%d_oprResult.csv'%(strategyName,symbol,K_MIN,gray.Target,gray.Windows))
         oprdf.to_csv(rawpath+'ForwardOprAnalyze\\'+tofilename)
 
+        r=RS.getStatisticsResult(oprdf,indexcolsFlag,indexcols)
+        '''
         annual = RS.annual_return(oprdf,cash_col='own cash',closeutc_col=closeutc_col)
         sharpe = RS.sharpe_ratio(oprdf,cash_col='own cash',closeutc_col=closeutc_col,retr_col=retr_col)
         average_change = RS.average_change(oprdf,retr_col=retr_col)
@@ -296,11 +299,10 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
         endcash = oprdf['own cash'].iloc[-1]
         mincash = oprdf['own cash'].min()
         maxcash = oprdf['own cash'].max()
+        '''
+        groupResult.append([gray.name,gray.Target,gray.Windows]+r)
 
-        groupResult.append([gray.name,gray.Target,gray.Windows,annual,sharpe,average_change,successrate,max_drawback,max_successive_up,max_successive_down,max_return,min_return,endcash,mincash,maxcash])
-
-    groupResultDf=pd.DataFrame(groupResult,columns=['Group','Target','Windows','annual','sharpe','average_change','success_rate','drawback',
-                                                    'max_successive_up','max_successive_down','max_return','min_return','endcash','mincash','maxcash'])
+    groupResultDf=pd.DataFrame(groupResult,columns=['Group','Target','Windows']+indexcols)
     groupResultDf.to_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+'_'+str(K_MIN)+'_groupOprResult.csv')
     pass
 

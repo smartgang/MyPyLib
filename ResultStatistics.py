@@ -18,6 +18,7 @@
 import pandas as pd
 from pandas import Series
 from datetime import date
+import numpy as np
 
 def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc',openutc_col='openutc'):
     '''
@@ -175,6 +176,210 @@ def success_rate(resultdf,ret_col='ret'):
     successcount=resultdf.loc[resultdf[ret_col]>0].shape[0]
     totalcount=resultdf.shape[0]
     return successcount/float(totalcount)
+
+#===================================重新包装===============================
+def opr_times(resultdf,new=False):
+    '''操作次数'''
+    return resultdf.shape[0]
+
+def long_opr_times(resultdf,new=False):
+    '''多操作次数'''
+    return resultdf.loc[resultdf['tradetype']==1].shape[0]
+
+def short_opr_times(resultdf,new=False):
+    '''空操作次数'''
+    return resultdf.loc[resultdf['tradetype']==-1].shape[0]
+
+def end_cash(resultdf,new=False):
+    '''最终资金'''
+    if new:
+        return resultdf.iloc[-1]['new_own cash']
+    else:
+        return resultdf.iloc[-1]['own cash']
+
+def long_opr_rate(resultdf,new=False):
+    '''多操作占比'''
+    return resultdf.loc[resultdf['tradetype']==1].shape[0]/resultdf.shape[0]
+
+def short_opr_rate(resultdf,new=False):
+    '''空操作占比'''
+    return resultdf.loc[resultdf['tradetype'] == -1].shape[0] / resultdf.shape[0]
+
+
+def annual(resultdf,new=False):
+    '''年化收益'''
+    if new:
+        cash_col='new_own cash'
+        closeutc_col='new_closeutc'
+        openutc_col='openutc'
+    else:
+        cash_col='own cash'
+        closeutc_col='closeutc'
+        openutc_col='openutc'
+    return annual_return(resultdf, cash_col,closeutc_col,openutc_col)
+
+def sharpe(resultdf,new=False):
+    '''夏普比率'''
+    if new:
+        cash_col='new_own cash'
+        closeutc_col='new_closeutc'
+        retr_col='new_ret_r'
+        openutc_col='openutc'
+    else:
+        cash_col='own cash'
+        closeutc_col='closeutc'
+        retr_col='ret_r'
+        openutc_col='openutc'
+    return sharpe_ratio(resultdf,cash_col,closeutc_col,retr_col,openutc_col)
+
+def sr(resultdf,new=False):
+    '''成功率'''
+    if new:
+        ret_col='new_ret'
+    else:
+        ret_col='ret'
+    return success_rate(resultdf, ret_col)
+
+def long_sr(resultdf,new=False):
+    '''多操作成功率'''
+    if new:
+        ret_col='new_ret'
+    else:
+        ret_col='ret'
+    df=resultdf.loc[resultdf['tradetype']==1]
+    return success_rate(df,ret_col)
+
+def short_sr(resultdf,new=False):
+    '''空操作成功率'''
+    if new:
+        ret_col='new_ret'
+    else:
+        ret_col='ret'
+    df=resultdf.loc[resultdf['tradetype']==-1]
+    return success_rate(df,ret_col)
+
+def draw_back(resultdf,new=False):
+    '''最大回撤'''
+    if new:
+        cash_col='new_own cash'
+        opentime_col='opentime'
+    else:
+        cash_col='own cash'
+        opentime_col='opentime'
+    return max_drawback(resultdf, cash_col, opentime_col)[0]
+
+def max_single_earn_rate(resultdf,new=False):
+    '''单次最大盈利'''
+    if new:
+        retr_col='new_ret_r'
+    else:
+        retr_col='ret_r'
+    return resultdf[retr_col].max()
+
+def max_single_loss_rate(resultdf,new=False):
+    '''单次最大亏损'''
+    if new:
+        retr_col='new_ret_r'
+    else:
+        retr_col='ret_r'
+    return resultdf[retr_col].min()
+
+def profit_loss_rate(resultdf,new=False):
+    '''盈亏比'''
+    if new:
+        ret_col = 'new_ret'
+    else:
+        ret_col = 'ret'
+    avg_profit=resultdf.loc[resultdf[ret_col]>0,ret_col].mean()
+    avg_loss = resultdf.loc[resultdf[ret_col]<0,ret_col].mean()
+    return avg_profit/abs(avg_loss)
+
+def long_profit_loss_rate(resultdf,new=False):
+    '''多操作盈亏比'''
+    if new:
+        ret_col = 'new_ret'
+    else:
+        ret_col = 'ret'
+    avg_profit=resultdf.loc[(resultdf[ret_col]>0)&(resultdf['tradetype']==1),ret_col].mean()
+    avg_loss = resultdf.loc[(resultdf[ret_col]<0)&(resultdf['tradetype']==1),ret_col].mean()
+    return avg_profit/abs(avg_loss)
+
+def short_profit_loss_rate(resultdf,new=False):
+    '''空操作盈亏比'''
+    if new:
+        ret_col = 'new_ret'
+    else:
+        ret_col = 'ret'
+    avg_profit=resultdf.loc[(resultdf[ret_col]>0)&(resultdf['tradetype']==-1),ret_col].mean()
+    avg_loss = resultdf.loc[(resultdf[ret_col]<0)&(resultdf['tradetype']==-1),ret_col].mean()
+    return avg_profit/abs(avg_loss)
+
+def successive_win(resultdf,new=False):
+    '''连续盈利次数统计'''
+    df1 = pd.DataFrame()
+    df1['ret'] = resultdf['ret']
+    df1['tradetype'] = resultdf['tradetype']
+    df1['oprindex'] = np.arange(df1.shape[0])
+    df1['win'] = -1
+    df1.loc[df1['ret'] > 0, 'win'] = 1
+    df1['win_shift1'] = df1['win'].shift(1).fillna(0)
+    df1['win_cross'] = 0
+    df1.loc[df1['win'] != df1['win_shift1'], 'win_cross'] = df1['oprindex']
+    df1.ix[0, 'win_cross'] = 1
+    df2 = pd.DataFrame()
+    df2['oprindex'] = df1.loc[df1['win_cross'] != 0, 'oprindex']
+    df2['ret'] = df1.loc[df1['win_cross'] != 0, 'ret']
+    df2['count'] = df2['oprindex'].shift(-1).fillna(0) - df2['oprindex']
+    df2.ix[df2.iloc[-1].oprindex, 'count'] = 0
+    win_count = df2.loc[df2['ret'] > 0, 'count']
+    loss_count = df2.loc[df2['ret'] <= 0, 'count']
+    return {
+        "MaxSuccessiveEarn":win_count.max(),
+        "MaxSuccessiveLoss":loss_count.max(),
+        "AvgSuccessiveEarn":win_count.mean(),
+        "AveSuccessiveLoss":loss_count.mean()
+    }
+
+ResultIndexFucnMap={
+    "OprTimes": opr_times,  # 操作次数
+    "LongOprTimes": long_opr_times,  # 多操作次数
+    "ShortOprTimes": short_opr_times,  # 空操作次数
+    "EndCash": end_cash,  # 最终资金
+    "LongOprRate": long_opr_rate,  # 多操作占比
+    "ShortOprRate": short_opr_rate,  # 空操作占比
+    "Annual": annual,  # 年化收益
+    "Sharpe": sharpe,  # 夏普
+    "SR": sr,  # 成功率
+    "LongSR": long_sr,  # 多操作成功率
+    "ShortSR": short_sr,  # 空操作成功率
+    "DrawBack": draw_back,  # 资金最大回撤
+    "MaxSingleEarnRate": max_single_earn_rate,  # 单次最大盈利率
+    "MaxSingleLossRate": max_single_loss_rate,  # 单次最大亏损率
+    "ProfitLossRate": profit_loss_rate,  # 盈亏比
+    "LongProfitLossRate": long_profit_loss_rate,  # 多操作盈亏比
+    "ShoartProfitLossRate": short_profit_loss_rate,  # 空操作盈亏比
+}
+
+def getStatisticsResult(resultdf,new,indexlist):
+    '''计算统计结果
+    连续盈亏次数的计算量比较大并且重复，所以一次算好4个备用
+    下面4个指标单独计算，其他的使用map的函数直接返回结果
+    "MaxSuccessiveEarn": True,  # 最大连续盈利次数
+    "MaxSuccessiveLoss": True,  # 最大连续亏损次数
+    "AvgSuccessiveEarn": True,  # 平均连续盈利次数
+    "AveSuccessiveLoss": True  # 平均连续亏损次数'
+    '''
+    r=[]
+    successive_result={}#用来保存连续盈亏次数计算结果
+    for d in indexlist:
+        if d in ["MaxSuccessiveEarn","MaxSuccessiveLoss","AvgSuccessiveEarn","AveSuccessiveLoss"]:
+            if not successive_result:
+                successive_result=successive_win(resultdf,new)
+            r.append(successive_result[d])
+        else:
+            func=ResultIndexFucnMap[d]
+            r.append(func(resultdf,new))
+    return r
 
 def calcResult(result,symbolinfo,initialCash,positionRatio,ret_col='ret'):
     '''计算交易结果'''

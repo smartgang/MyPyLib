@@ -141,7 +141,7 @@ def ownlCalRealTick(symbol,K_MIN,setname,ticksupplier,barxm,winSwitch,nolossThre
     oprdf.to_csv(tofolder + symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_realtick.csv')
 
 #================================================================================================
-def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder):
+def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder,indexcols):
     print 'ownl;', str(winSwitch), ',setname:', setname
     symbol=symbolInfo.symbol
     oprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -188,6 +188,9 @@ def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossTh
     oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
 
     #计算统计结果
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    '''
     oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
@@ -200,12 +203,13 @@ def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossTh
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     #max_retrace_rate = oprdf['new_retrace rate'].max()
-
-    return [setname,winSwitch,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    '''
+    return [setname, winSwitch, worknum] + oldr + newr
+    #return [setname,winSwitch,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
 
 
 #================================================================================================
-def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder):
+def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder,indexcols):
     '''
     增量式止损
     '''
@@ -266,6 +270,9 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
 
     #计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+
     oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
@@ -281,8 +288,8 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
     del oprdf
     del orioprdf
     del ownldf
-    return [setname,winSwitch,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
-
+    #return [setname,winSwitch,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    return [setname, winSwitch, worknum] + oldr + newr
 if __name__ == '__main__':
     #参数配置
     exchange_id = 'SHFE'

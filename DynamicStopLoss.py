@@ -199,7 +199,7 @@ def getShortDrawbackByTick(bardf,stopTarget):
     return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
 
 
-def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder):
+def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder,indexcols):
     print 'sl;', str(slTarget), ',setname:', setname
     symbol=symbolInfo.symbol
     oprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -259,11 +259,16 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionR
     oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
 
     #计算统计结果
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+
+    '''
     oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
     oldDrawBack = RS.max_drawback(oprdf)[0]
     oldSR = RS.success_rate(oprdf)
+    
     newendcash = oprdf['new_own cash'].iloc[-1]
     newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
     newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
@@ -271,11 +276,12 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionR
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     #max_retrace_rate = oprdf['new_retrace rate'].max()
+    '''
     del oprdf
-    return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    return [setname,slTarget,worknum]+oldr+newr
 
-
-def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder):
+def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder,indexcols):
     '''
     增量式止损
     1.读取现有的止损文件，读取操作文件
@@ -354,6 +360,9 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
 
     #计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    '''
     oldendcash = oprdf['own cash'].iloc[-1]
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
@@ -366,13 +375,14 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     #max_retrace_rate = oprdf['new_retrace rate'].max()
+    '''
     del oprdf
     del orioprdf
     del dsldf
-    return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
-
+    #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    return [setname,slTarget,worknum]+oldr+newr
 #======================================================================================
-def fastDslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder):
+def fastDslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder,indexcols):
     #快速动态止损
     print 'sl;', str(slTarget), ',setname:', setname
     oprdf = pd.read_csv(symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -488,6 +498,10 @@ def fastDslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder
     oprdf.to_csv(tofolder+symbol + str(K_MIN) + ' ' + setname + ' resultfastDSL_by_tick.csv')
 
     #计算统计结果
+    worknum = oprdf.loc[oprdf['new_closeindex'] != oprdf['closeindex']].shape[0]
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    '''
     oldendcash = oprdf.ix[oprnum - 1, 'own cash']
     oldAnnual = RS.annual_return(oprdf)
     oldSharpe = RS.sharpe_ratio(oprdf)
@@ -500,9 +514,10 @@ def fastDslCal(symbol,K_MIN,setname,bar1m,barxm,pricetick,slip,slTarget,tofolder
     newSR = RS.success_rate(oprdf,ret_col='new_ret')
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     max_retrace_rate = oprdf['new_retrace rate'].max()
+    '''
     del oprdf
-    return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate,max_retrace_rate]
-
+    #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate,max_retrace_rate]
+    return [setname,slTarget,worknum]+oldr+newr
 
 def dslCalRealTick(symbol,K_MIN,setname,ticksupplier,barxm,pricetick,slip,slTarget,tofolder):
     print 'sl;', str(slTarget), ',setname:', setname
