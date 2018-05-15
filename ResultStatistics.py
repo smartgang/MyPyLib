@@ -316,23 +316,27 @@ def short_profit_loss_rate(resultdf,new=False):
 
 def successive_win(resultdf,new=False):
     '''连续盈利次数统计'''
+    if new:
+        ret_col='new_ret'
+    else:
+        ret_col='ret'
     df1 = pd.DataFrame()
-    df1['ret'] = resultdf['ret']
+    df1[ret_col] = resultdf[ret_col]
     df1['tradetype'] = resultdf['tradetype']
     df1['oprindex'] = np.arange(df1.shape[0])
     df1['win'] = -1
-    df1.loc[df1['ret'] > 0, 'win'] = 1
+    df1.loc[df1[ret_col] > 0, 'win'] = 1
     df1['win_shift1'] = df1['win'].shift(1).fillna(0)
     df1['win_cross'] = 0
     df1.loc[df1['win'] != df1['win_shift1'], 'win_cross'] = df1['oprindex']
     df1.ix[0, 'win_cross'] = 1
     df2 = pd.DataFrame()
     df2['oprindex'] = df1.loc[df1['win_cross'] != 0, 'oprindex']
-    df2['ret'] = df1.loc[df1['win_cross'] != 0, 'ret']
+    df2[ret_col] = df1.loc[df1['win_cross'] != 0,ret_col]
     df2['count'] = df2['oprindex'].shift(-1).fillna(0) - df2['oprindex']
     df2.ix[df2.iloc[-1].oprindex, 'count'] = 0
-    win_count = df2.loc[df2['ret'] > 0, 'count']
-    loss_count = df2.loc[df2['ret'] <= 0, 'count']
+    win_count = df2.loc[df2[ret_col] > 0, 'count']
+    loss_count = df2.loc[df2[ret_col] <= 0, 'count']
     return {
         "MaxSuccessiveEarn":win_count.max(),
         "MaxSuccessiveLoss":loss_count.max(),
