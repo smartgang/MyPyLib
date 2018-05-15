@@ -20,11 +20,11 @@ def calMACD(closedata, short=12, long1=26, mid=9):
     '''
     #sema = pd.ewma(closedata, span=short)
     # lema  = pd.ewma(closedata, span=long1)
-    sema=closedata.ewm(span=short).mean()
-    lema=closedata.ewm(span=long1).mean()
+    sema=closedata.ewm(span=short,adjust=False).mean()
+    lema=closedata.ewm(span=long1,adjust=False).mean()
     data_dif= sema - lema
     #data_dea = pd.ewma(data_dif, span=mid)
-    data_dea = data_dif.ewm(span=mid).mean()
+    data_dea = data_dif.ewm(span=mid,adjust=False).mean()
     data_bar = 2 * (data_dif - data_dea)
     return data_dif,data_dea,data_bar,sema,lema
 
@@ -102,8 +102,10 @@ def calMA(data, N=5):
     return data
 
 def calEMA(data,N=5):
-    #data= pd.ewma(data,span=N)
-    data = data.ewm(ignore_na=False,span=N,min_periods=0).mean()
+    #ewm的adjust必须设为False，按如下公式算
+    #y0 = x0
+    #yt= (1−α)yt−1 + αxt,
+    data = data.ewm(span=N,adjust=False).mean()
     return data
 
 def calNewMA(data,N=5):
@@ -246,14 +248,14 @@ def newMA(close,dfma,MA_Short,MA_Long):
 if __name__ == '__main__':
     N=5
     M=10
-    df=pd.read_csv('test.csv')
-    df1=EMA(df['close'],N,M)
-    print df1.head(20)
-
+    df=pd.read_csv('C:\\testdata\MacdMa_RB_xbardf_1.csv')
+    df['ema']=calEMA(df['close'],50)
+    print df.head(20)
+    df.to_csv('eam_test.csv')
     #import numpy
     #for i in numpy.arange(21,344):
     #    df1.loc[i - 1]=newMA(df.iloc[0:i]['close'],df1,N,M)
-    df1.to_csv('EMA.csv')
+    #df1.to_csv('EMA.csv')
 
 
 #df=pd.read_csv('ta-macd-after.csv')
