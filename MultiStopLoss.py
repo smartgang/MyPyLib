@@ -11,7 +11,7 @@ import multiprocessing
 from DynamicStopLoss import *
 from OnceWinNoLoss import  *
 
-def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,positionRatio,initialCash,tofolder):
+def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,positionRatio,initialCash,tofolder,indexcols):
     print 'setname:', setname
     symbol=symbolInfo.symbol
     oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -59,6 +59,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     for i in range(sltnum):
         #先取最早平仓的时间，再根据时间去匹配类型
         slt=stopLossTargetDictList[i]
+        name = slt['name']
         utcnamebuf = name + '_closeutc_buf'
         oprdf['min_closeutc']=oprdf.loc[:,['min_closeutc',utcnamebuf]].min(axis=1)
     for i in range(sltnum):
@@ -89,18 +90,11 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     oprdf.to_csv(tofolder+'\\'+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv')
 
     #计算统计结果
-    oldendcash = oprdf['own cash'].iloc[-1]
-    oldAnnual = RS.annual_return(oprdf)
-    oldSharpe = RS.sharpe_ratio(oprdf)
-    oldDrawBack = RS.max_drawback(oprdf)[0]
-    oldSR = RS.success_rate(oprdf)
-    newendcash = oprdf['new_own cash'].iloc[-1]
-    newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
-    newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
-    newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
-    newSR = RS.success_rate(oprdf,ret_col='new_ret')
     slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
-    return [setname,tofolder,slWorkNum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR]
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
+    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    return [setname,tofolder,slWorkNum,] + oldr + newr
+
 
 
 if __name__ == '__main__':
