@@ -10,6 +10,7 @@
 '''
 import pandas as pd
 import ResultStatistics as RS
+import DATA_CONSTANTS as DC
 
 def getLongFixRateLossByTick(bardf,openprice,fixRate):
     '''
@@ -173,27 +174,16 @@ def frslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,positionRa
     #保存新的result文档
     oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultFRSL_by_tick.csv')
 
+    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
     #计算统计结果
-    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
-    newr = RS.getStatisticsResult(oprdf,True,indexcols)
-    '''
-    oldendcash = oprdf['own cash'].iloc[-1]
-    oldAnnual = RS.annual_return(oprdf)
-    oldSharpe = RS.sharpe_ratio(oprdf)
-    oldDrawBack = RS.max_drawback(oprdf)[0]
-    oldSR = RS.success_rate(oprdf)
-    newendcash = oprdf['new_own cash'].iloc[-1]
-    newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
-    newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
-    newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
-    newSR = RS.success_rate(oprdf,ret_col='new_ret')
-    max_single_loss_rate = abs(oprdf['new_ret_r'].min())
-    #max_retrace_rate = oprdf['new_retrace rate'].max()
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols,olddailydf)
 
-    return [setname,fixRate,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
-    '''
+    dailyK=DC.generatDailyClose(barxm)
+    dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
+    dR.calDailyResult()
+    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultFRSL_by_tick.csv'))
+    newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
     del oprdf
-    #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
     return [setname,fixRate,worknum]+oldr+newr
 
 #================================================================================================
@@ -261,26 +251,14 @@ def progressFrslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,fixRate,po
 
     #计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
-    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
-    newr = RS.getStatisticsResult(oprdf,True,indexcols)
-    '''
-    oldendcash = oprdf['own cash'].iloc[-1]
-    oldAnnual = RS.annual_return(oprdf)
-    oldSharpe = RS.sharpe_ratio(oprdf)
-    oldDrawBack = RS.max_drawback(oprdf)[0]
-    oldSR = RS.success_rate(oprdf)
-    newendcash = oprdf['new_own cash'].iloc[-1]
-    newAnnual = RS.annual_return(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc')
-    newSharpe = RS.sharpe_ratio(oprdf,cash_col='new_own cash',closeutc_col='new_closeutc',retr_col='new_ret_r')
-    newDrawBack = RS.max_drawback(oprdf,cash_col='new_own cash')[0]
-    newSR = RS.success_rate(oprdf,ret_col='new_ret')
-    max_single_loss_rate = abs(oprdf['new_ret_r'].min())
-    #max_retrace_rate = oprdf['new_retrace rate'].max()
-    del oprdf
-    del orioprdf
-    del frsldf
-    return [setname,fixRate,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
-    '''
+    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols,olddailydf)
+
+    dailyK=DC.generatDailyClose(barxm)
+    dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
+    dR.calDailyResult()
+    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultFRSL_by_tick.csv'))
+    newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
     del oprdf
     del orioprdf
     del frsldf

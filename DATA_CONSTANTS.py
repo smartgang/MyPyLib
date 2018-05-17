@@ -31,6 +31,16 @@ def getTradedates(exchangeid='SHFE',startdate='2016-01-01',enddate='2017-12-30')
     df.drop('Unnamed: 0', inplace=True, axis=1)
     return df
 
+def generatDailyClose(dailyK):
+    '''获取交易区间时间范围内的交易日和收盘价信息，生成dailyDf'''
+    dailyK['date'] = dailyK['strtime'].str.slice(0, 10)
+    closegrouped = dailyK['close'].groupby(dailyK['date'])
+    utcgrouped = dailyK['utc_time'].groupby(dailyK['date'])
+    dailyClose = pd.DataFrame(closegrouped.last())
+    dailyClose['preclose'] = dailyClose['close'].shift(1).fillna(0)
+    dailyClose['utc_time'] = utcgrouped.last()
+    return dailyClose
+
 #---------------------------------------------------------------------------------------------
 def getBarData(symbol='SHFE.RB',K_MIN=60,starttime='2017-05-01 00:00:00',endtime='2018-01-01 00:00:00'):
     #读取bar数据

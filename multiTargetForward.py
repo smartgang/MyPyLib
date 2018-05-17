@@ -39,6 +39,9 @@ def calWhiteResult(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthl
         #print setname
         filename=datapath+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' '+filesuffix
         resultdf=pd.read_csv(filename)
+
+        dailydf=pd.read_csv(datapath+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' daily'+filesuffix)
+
         annual_list=[]
         sharpe_list=[]
         success_rate_list=[]
@@ -53,10 +56,13 @@ def calWhiteResult(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthl
             startutc=float(time.mktime(time.strptime(whiteWindowsStart,"%Y-%m-%d %H:%M:%S")))
             endutc=float(time.mktime(time.strptime(whiteWindowsEnd,"%Y-%m-%d %H:%M:%S")))
             resultdata=resultdf.loc[(resultdf['openutc']>=startutc) & (resultdf['openutc']<endutc)]
+            dailydata = dailydf.loc[(dailydf['utc_time']>=startutc) & (dailydf['utc_time']<endutc)]
             if resultdata.shape[0]>0:
                 resultdata=resultdata.reset_index(drop=True)
-                annual_list.append(RS.annual_return(resultdata,cash_col=cash_col,closeutc_col=closeutc_col))
-                sharpe_list.append(RS.sharpe_ratio(resultdata,cash_col=cash_col,closeutc_col=closeutc_col,retr_col=retr_col))
+                #annual_list.append(RS.annual_return(resultdata,cash_col=cash_col,closeutc_col=closeutc_col))
+                #sharpe_list.append(RS.sharpe_ratio(resultdata,cash_col=cash_col,closeutc_col=closeutc_col,retr_col=retr_col))
+                annual_list.append(RS.annual(dailydata))
+                sharpe_list.append(RS.sharpe(dailydata))
                 success_rate_list.append(RS.success_rate(resultdata,ret_col=ret_col))
                 drawback,a,b=RS.max_drawback(resultdata,cash_col=cash_col)
                 drawback_list.append(drawback)
@@ -248,7 +254,7 @@ def getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmo
     oprdf=oprdf.loc[(oprdf['openutc'] >= startutc) & (oprdf['openutc'] < endutc)]
     return oprdf[['opentime','openutc','openindex','openprice',closetime_col,closeutc_col,closeindex_col,closeprice_col,'tradetype',ret_col,retr_col]]
 
-def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positionRatio,initialCash,indexcols,indexcolsFlag,resultfilesuffix='result.csv'):
+def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,dailyK,positionRatio,initialCash,indexcols,indexcolsFlag,resultfilesuffix='result.csv'):
     '''
     根据灰区的取值，取出各灰区的操作列表，组成目标集组的操作表，并计算各个评价指标
     :return:
@@ -265,6 +271,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
     retr_col = columns['retr_col']
     ret_col = columns['ret_col']
     cash_col = columns['cash_col']
+    hands_col = columns['hands_col']
 
     for i in range(graydf.shape[0]):
         gray=graydf.iloc[i]
@@ -279,7 +286,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
 
         oprdf=oprdf.reset_index(drop=True)
 
-        oprdf['commission_fee'], oprdf['per earn'], oprdf[cash_col], oprdf['hands'] = RS.calcResult(
+        oprdf['commission_fee'], oprdf['per earn'], oprdf[cash_col], oprdf[hands_col] = RS.calcResult(
             oprdf,
             symbolinfo,
             initialCash,
@@ -287,19 +294,13 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,positio
         tofilename=('%s %s%d_%s_win%d_oprResult.csv'%(strategyName,symbol,K_MIN,gray.Target,gray.Windows))
         oprdf.to_csv(rawpath+'ForwardOprAnalyze\\'+tofilename)
 
-        r=RS.getStatisticsResult(oprdf,indexcolsFlag,indexcols)
-        '''
-        annual = RS.annual_return(oprdf,cash_col='own cash',closeutc_col=closeutc_col)
-        sharpe = RS.sharpe_ratio(oprdf,cash_col='own cash',closeutc_col=closeutc_col,retr_col=retr_col)
-        average_change = RS.average_change(oprdf,retr_col=retr_col)
-        successrate = RS.success_rate(oprdf,ret_col=ret_col)
-        max_drawback,b,c = RS.max_drawback(oprdf,cash_col='own cash')
-        max_successive_up,max_successive_down=RS.max_successive_up(oprdf,ret_col=ret_col)
-        max_return,min_return = RS.max_period_return(oprdf,retr_col=retr_col)
-        endcash = oprdf['own cash'].iloc[-1]
-        mincash = oprdf['own cash'].min()
-        maxcash = oprdf['own cash'].max()
-        '''
+        dR = RS.dailyReturn(symbolinfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
+        dR.calDailyResult()
+        tofilename = ('%s %s%d_%s_win%d_oprdailyResult.csv' % (strategyName, symbol, K_MIN, gray.Target, gray.Windows))
+        dR.dailyClose.to_csv(rawpath+'ForwardOprAnalyze\\'+tofilename)
+
+        r=RS.getStatisticsResult(oprdf,indexcolsFlag,indexcols,dR.dailyClose)
+
         groupResult.append([gray.name,gray.Target,gray.Windows]+r)
 
     groupResultDf=pd.DataFrame(groupResult,columns=['Group','Target','Windows']+indexcols)
@@ -315,7 +316,8 @@ def getColumnsName(new=True):
         'closeprice_col':'new_closeprice',
         'cash_col': 'new_own cash',
         'retr_col': 'new_ret_r',
-        'ret_col': 'new_ret'
+        'ret_col': 'new_ret',
+        'hands_col':'new_hands'
         }
     else:
         return {
@@ -325,7 +327,8 @@ def getColumnsName(new=True):
         'closeprice_col':'closeprice',
         'cash_col': 'own cash',
         'retr_col': 'ret_r',
-        'ret_col': 'ret'
+        'ret_col': 'ret',
+        'hands_col':'hands'
         }
 
 def runPara(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthlist,rawdatapath,resultpath,rankpath,columns,filesuffix):
@@ -362,14 +365,18 @@ def  getMonthParameter(strategyName,startmonth,endmonth,symbolinfo,K_MIN,paraset
         print setname
         filename = oprresultpath + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + resultfilesuffix
         resultdf = pd.read_csv(filename)
+        dailydf=pd.read_csv(datapath+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' daily'+resultfilesuffix)
         starttime = startmonth+ '-01 00:00:00'
         endtime = endmonth + '-01 00:00:00'
         startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
         endutc = float(time.mktime(time.strptime(endtime, "%Y-%m-%d %H:%M:%S")))
         resultdata = resultdf.loc[(resultdf['openutc'] >= startutc) & (resultdf['openutc'] < endutc)]
         resultdata = resultdata.reset_index(drop=True)
-        annual_list.append(RS.annual_return(resultdata, cash_col=cash_col, closeutc_col=closeutc_col))
-        sharpe_list.append(RS.sharpe_ratio(resultdata, cash_col=cash_col, closeutc_col=closeutc_col, retr_col=retr_col))
+        dailydata = dailydf.loc[(dailydf['utc_time'] >= startutc) & (dailydf['utc_time'] < endutc)]
+        #annual_list.append(RS.annual_return(resultdata, cash_col=cash_col, closeutc_col=closeutc_col))
+        #sharpe_list.append(RS.sharpe_ratio(resultdata, cash_col=cash_col, closeutc_col=closeutc_col, retr_col=retr_col))
+        annual_list.append(RS.annual(dailydata))
+        sharpe_list.append(RS.sharpe(dailydata))
         success_rate_list.append(RS.success_rate(resultdata, ret_col=ret_col))
         drawback, a, b = RS.max_drawback(resultdata, cash_col=cash_col)
         drawback_list.append(drawback)

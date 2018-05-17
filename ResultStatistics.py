@@ -17,8 +17,9 @@
 '''
 import pandas as pd
 from pandas import Series
-from datetime import date
+from datetime import date,timedelta
 import numpy as np
+import DATA_CONSTANTS as DC
 
 def annual_return(resultdf,cash_col='own cash',closeutc_col='closeutc',openutc_col='openutc'):
     '''
@@ -209,28 +210,37 @@ def short_opr_rate(resultdf,new=False):
 def annual(resultdf,new=False):
     '''年化收益'''
     if new:
-        cash_col='new_own cash'
-        closeutc_col='new_closeutc'
-        openutc_col='openutc'
+        cash_col='balance'
     else:
-        cash_col='own cash'
-        closeutc_col='closeutc'
-        openutc_col='openutc'
-    return annual_return(resultdf, cash_col,closeutc_col,openutc_col)
+        cash_col='balance'
+    startcash=resultdf.iloc[0][cash_col]
+    startdate=date.fromtimestamp(resultdf.iloc[0].utc_time)
+    endcash=resultdf.iloc[-1][cash_col]
+    enddate=date.fromtimestamp(resultdf.iloc[-1].utc_time)
+    datenum=float((enddate-startdate).days)+1
+    return pow(endcash / startcash, 365 / datenum) - 1
 
 def sharpe(resultdf,new=False):
     '''夏普比率'''
+    rf = 0.0284
     if new:
-        cash_col='new_own cash'
-        closeutc_col='new_closeutc'
-        retr_col='new_ret_r'
-        openutc_col='openutc'
+        retr_col = 'return'
+        cash_col = 'balance'
     else:
-        cash_col='own cash'
-        closeutc_col='closeutc'
-        retr_col='ret_r'
-        openutc_col='openutc'
-    return sharpe_ratio(resultdf,cash_col,closeutc_col,retr_col,openutc_col)
+        retr_col = 'return'
+        cash_col = 'balance'
+    vol = resultdf[retr_col].std() * np.sqrt(240)
+
+    #重新算一次年化
+    startcash=resultdf.iloc[0][cash_col]
+    startdate=date.fromtimestamp(resultdf.iloc[0].utc_time)
+    endcash=resultdf.iloc[-1][cash_col]
+    enddate=date.fromtimestamp(resultdf.iloc[-1].utc_time)
+    datenum=float((enddate-startdate).days)+1
+    annual=pow(endcash / startcash, 365 / datenum) - 1
+
+    # 计算夏普比率
+    return (annual - rf) / vol
 
 def sr(resultdf,new=False):
     '''成功率'''
@@ -364,7 +374,7 @@ ResultIndexFucnMap={
     "ShoartProfitLossRate": short_profit_loss_rate,  # 空操作盈亏比
 }
 
-def getStatisticsResult(resultdf,new,indexlist):
+def getStatisticsResult(resultdf,new,indexlist,dailyResultDf=None):
     '''计算统计结果
     连续盈亏次数的计算量比较大并且重复，所以一次算好4个备用
     下面4个指标单独计算，其他的使用map的函数直接返回结果
@@ -380,6 +390,9 @@ def getStatisticsResult(resultdf,new,indexlist):
             if not successive_result:
                 successive_result=successive_win(resultdf,new)
             r.append(successive_result[d])
+        elif d in ["Annual","Sharpe"]:
+            func=ResultIndexFucnMap[d]
+            r.append(func(dailyResultDf,new))
         else:
             func=ResultIndexFucnMap[d]
             r.append(func(resultdf,new))
@@ -429,6 +442,195 @@ def calcResult(result,symbolinfo,initialCash,positionRatio,ret_col='ret'):
         newresult.ix[i, 'hands'] = hands
 
     return newresult['commission_fee'],newresult['per earn'],newresult['own cash'],newresult['hands']
+
+class dailyReturn:
+    '''日收益类，将以操作纬度组织结果的oprdf转换为以交易日为纬度的dailyReturn'''
+
+    openheader = ['opentime', 'openutc', 'openindex', 'openprice', 'tradetype', 'hands']
+    new_openheader = ['opentime', 'openutc', 'openindex', 'openprice', 'tradetype', 'new_hands']
+    closeheaders = ['closetime', 'closeutc', 'closeindex', 'closeprice', 'tradetype', 'hands']
+    new_closeheaders = ['new_closetime', 'new_closeutc', 'new_closeindex', 'new_closeprice', 'tradetype', 'new_hands']
+
+    def __init__(self,symbolinfo,oprdf,dailydf,initialCash):
+
+        self.initialCash= initialCash
+        self.symbolinfo=symbolinfo
+        self.newFlag=self.isNewCols(oprdf)
+        self.reformOprDf=self.reformOpr(oprdf)
+        self.dailyClose=dailydf
+        self.setDateRange()
+        #self.dailyClose=self.getTradeDays()
+
+    def isNewCols(self,oprdf):
+        '''判断是用否用new结果（止损和推进）'''
+        cols = oprdf.columns.tolist()
+        if 'new_closeutc' in cols:
+            return True
+        else:
+            return False
+
+    def reformOpr(self,oprdf):
+        '''将oprdf重新组织，开平仓放到同一列中'''
+        if self.newFlag:
+            opendf = oprdf.loc[:, self.new_openheader]
+            opendf.rename(columns={'opentime': 'oprtime',
+                                   'openutc': 'oprutc',
+                                   'openindex': 'oprindex',
+                                   'openprice': 'oprprice',
+                                   'new_hands': 'hands'
+                                   }, inplace=True)
+            opendf['oprtype'] = 1  # 1表示开仓
+
+            closedf = oprdf.loc[:,self.new_closeheaders]
+            closedf.rename(columns={'new_closetime': 'oprtime',
+                                    'new_closeutc': 'oprutc',
+                                    'new_closeindex': 'oprindex',
+                                    'new_closeprice': 'oprprice',
+                                    'new_hands': 'hands'
+                                    }, inplace=True)
+            closedf['oprtype'] = -1  # -1表示平仓
+        else:
+            opendf = oprdf.loc[:, self.openheader]
+            opendf.rename(columns={'opentime': 'oprtime',
+                                   'openutc': 'oprutc',
+                                   'openindex': 'oprindex',
+                                   'openprice': 'oprprice',
+                                   }, inplace=True)
+            opendf['oprtype'] = 1  # 1表示开仓
+
+            closedf = oprdf.loc[:,self.closeheaders]
+            closedf.rename(columns={'closetime': 'oprtime',
+                                    'closeutc': 'oprutc',
+                                    'closeindex': 'oprindex',
+                                    'closeprice': 'oprprice',
+                                    }, inplace=True)
+            closedf['oprtype'] = -1  # -1表示平仓
+        df = pd.concat([opendf, closedf])
+        df['tradeDate']=df['oprtime'].str.slice(0,10)
+        df['oprtype']=df['tradetype']*df['oprtype']
+        df.set_index('oprutc', inplace=True)
+        df.sort_index(inplace=True)
+        df.reset_index(drop=False,inplace=True)
+        return df
+
+    def setDateRange(self):
+        '''根据reformOprDf的时间，设置开始时间和结束时间'''
+        #开始时间为第1次交易前一天
+        #结束时间为最后1次交易的后一天
+        firstDateUtc=self.reformOprDf.iloc[0].oprutc
+        lastDateUtc=self.reformOprDf.iloc[-1].oprutc
+        self.startdate = date.fromtimestamp(firstDateUtc)-timedelta(days=1)
+        self.enddate = date.fromtimestamp(lastDateUtc)+timedelta(days=1)
+        self.natureDatenum = float((self.enddate - self.startdate).days) + 1 #时间范围内的自然日天数
+
+    def calDailyResult(self):
+        '''计算每日收益'''
+        self.dailyClose['openPosition'] = 0
+        self.dailyClose['closePosition'] = 0
+        self.dailyClose['positionChange'] = 0
+        self.dailyClose['pnlChange'] = 0
+        self.dailyClose['pnlPosition'] = 0
+        self.dailyClose['totalPnl'] = 0
+        self.dailyClose['commission'] = 0
+        self.dailyClose['slip'] = 0
+        self.dailyClose['turnover'] = 0
+        self.dailyClose['netPnl'] = 0
+
+        size=self.symbolinfo.getMultiplier()
+        slippage = self.symbolinfo.getSlip()
+        poundageType, poundageFee, poundageRate=self.symbolinfo.getPoundage()
+        # 先计算交易收益
+        self.reformOprDf['cp']=self.reformOprDf['hands']*self.reformOprDf['oprtype']*size
+        self.reformOprDf['op']=-self.reformOprDf['hands']*self.reformOprDf['oprtype']*self.reformOprDf['oprprice']*size
+        self.reformOprDf['handschange']=self.reformOprDf['hands']*self.reformOprDf['oprtype']
+        self.reformOprDf['turnover']=self.reformOprDf['oprprice']*self.reformOprDf['hands']*size
+        if poundageType == self.symbolinfo.POUNDGE_TYPE_RATE:
+            self.reformOprDf['commission'] = self.reformOprDf['turnover'] * poundageRate
+        else:
+            self.reformOprDf['commission'] = self.reformOprDf['hands'] * poundageFee
+        self.reformOprDf['slip'] = self.reformOprDf['hands']*size * slippage/2
+
+        grouped=self.reformOprDf.groupby('tradeDate')
+        handschange=grouped['handschange'].sum()
+
+        self.dailyClose.loc[handschange.index,'positionChange']=handschange
+        self.dailyClose['cp']=0
+        self.dailyClose['op']=0
+        self.dailyClose.loc[handschange.index,'cp']=grouped['cp'].sum()
+        self.dailyClose.loc[handschange.index,'op']=grouped['op'].sum()
+        self.dailyClose['pnlChange']=self.dailyClose['cp']*self.dailyClose['close']+self.dailyClose['op']
+        self.dailyClose.loc[handschange.index,'commission']=grouped['commission'].sum()
+        self.dailyClose.loc[handschange.index,'slip']=grouped['slip'].sum()
+        self.dailyClose.loc[handschange.index,'turnover']=grouped['turnover'].sum()
+
+        '''
+        oprnum=self.reformOprDf.shape[0]
+        for i in range(oprnum):
+
+            opr=self.reformOprDf.iloc[i]
+            oprtype=opr['oprtype']
+            dt=opr['tradeDate']
+            closePrice=self.dailyClose.ix[dt,'close']
+            if oprtype == 1:
+                posChange = opr.hands
+            else:
+                posChange = -opr.hands
+
+            tradingPnl = posChange * (closePrice - opr.oprprice) * size
+            turnover = opr.oprprice * opr.hands * size
+            if poundageType == self.symbolinfo.POUNDGE_TYPE_RATE:
+                commission = turnover * poundageRate
+            else:
+                commission = opr.hands * poundageFee
+            slip = opr.hands*size * slippage/2
+
+            self.dailyClose.ix[dt,'positionChange']+=posChange
+            self.dailyClose.ix[dt,'pnlChange'] +=tradingPnl
+            self.dailyClose.ix[dt,'commission'] += commission
+            self.dailyClose.ix[dt,'slip'] += slip
+            self.dailyClose.ix[dt,'turnover'] +=turnover
+        '''
+        #再按天计算持仓收益
+        self.dailyClose['openPosition']=self.dailyClose['positionChange'].shift(1).fillna(0).cumsum()
+        self.dailyClose['closePosition']=self.dailyClose['positionChange'].cumsum()
+        self.dailyClose['pnlPosition'] =self.dailyClose['openPosition'] * (self.dailyClose['close'] - self.dailyClose['preclose'] )* size
+        '''
+        dayNum=self.dailyClose.shape[0]
+        closePosition=self.dailyClose.iloc[0].positionChange
+        self.dailyClose.iloc[0].closePosition=closePosition
+        self.dailyClose.reset_index(drop=False,inplace=True)
+        for i in range(1,dayNum):
+            openPosition=closePosition
+            self.dailyClose.ix[i,'pnlPosition'] = openPosition * (self.dailyClose.ix[i,'close'] - self.dailyClose.ix[i,'preclose']) * size
+            self.dailyClose.ix[i,'openPosition']=openPosition
+            closePosition = openPosition+self.dailyClose.ix[i,'positionChange']
+            self.dailyClose.ix[i, 'closePosition']=closePosition
+        '''
+        # 汇总
+        self.dailyClose['totalPnl'] = self.dailyClose['pnlChange'] + self.dailyClose['pnlPosition']
+        self.dailyClose['netPnl'] = self.dailyClose['totalPnl'] - self.dailyClose['commission'] - self.dailyClose['slip']
+
+        self.dailyClose['balance'] = self.dailyClose['netPnl'].cumsum() + self.initialCash
+        self.dailyClose['return'] = (np.log(self.dailyClose['balance']) - np.log(self.dailyClose['balance'].shift(1))).fillna(0)
+        #self.dailyClose['return'].iloc[-1]=0
+        self.endCash=self.dailyClose['balance'].iloc[-1]
+
+    def calAnnual(self):
+        #totalReturn = (self.endCash / self.initialCash - 1)
+        #annualizedReturn = totalReturn / self.natureDatenum * 365
+        return pow(self.endCash / self.initialCash, 365 / self.natureDatenum) - 1
+        #return annualizedReturn
+
+    def calSharpe(self,annual):
+        '''
+        dailyReturn = self.dailyClose.loc[self.dailyClose['return']!=0,'return'].mean() * 100
+        returnStd = self.dailyClose.loc[self.dailyClose['return']!=0,'return'].std() * 100
+        sharpeRatio = dailyReturn / returnStd * np.sqrt(240)
+        return sharpeRatio
+        '''
+        vol = self.dailyClose['return'].std() * np.sqrt(240)
+        # 计算夏普比率
+        return (annual -0.0284) / vol
 
 if __name__ == '__main__':
     resultdf=pd.read_csv('D:\\002 MakeLive\myquant\LvyiWin\Results\SHFE RB600 slip\SHFE.RB600 Set6213 MS4 ML21 KN24 DN30 result.csv')

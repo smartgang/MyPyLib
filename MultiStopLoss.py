@@ -11,7 +11,7 @@ import multiprocessing
 from DynamicStopLoss import *
 from OnceWinNoLoss import  *
 
-def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,positionRatio,initialCash,tofolder,indexcols):
+def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,dailyK,positionRatio,initialCash,tofolder,indexcols):
     print 'setname:', setname
     symbol=symbolInfo.symbol
     oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -91,8 +91,14 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
 
     #计算统计结果
     slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
-    oldr = RS.getStatisticsResult(oprdf, False, indexcols)
-    newr = RS.getStatisticsResult(oprdf,True,indexcols)
+    olddailydf = pd.read_csv(stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols,olddailydf)
+
+    dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
+    dR.calDailyResult()
+    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv')
+    newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
+
     return [setname,tofolder,slWorkNum,] + oldr + newr
 
 
