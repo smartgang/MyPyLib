@@ -365,7 +365,7 @@ def  getMonthParameter(strategyName,startmonth,endmonth,symbolinfo,K_MIN,paraset
         print setname
         filename = oprresultpath + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + resultfilesuffix
         resultdf = pd.read_csv(filename)
-        dailydf=pd.read_csv(datapath+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' daily'+resultfilesuffix)
+        dailydf=pd.read_csv(oprresultpath + strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' daily'+resultfilesuffix)
         starttime = startmonth+ '-01 00:00:00'
         endtime = endmonth + '-01 00:00:00'
         startutc = float(time.mktime(time.strptime(starttime, "%Y-%m-%d %H:%M:%S")))
