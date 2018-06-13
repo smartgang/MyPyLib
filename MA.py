@@ -6,7 +6,7 @@
 '''
 import pandas as pd
 import numpy as np
-import talib
+#import talib
 
 
 def calMACD(closedata, short=12, long1=26, mid=9):

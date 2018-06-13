@@ -15,6 +15,29 @@ import os
 import ResultStatistics as RS
 import multiprocessing
 
+def bar1mPrepare(bar1m):
+    bar1m['longHigh'] = bar1m['high']
+    bar1m['shortHigh'] = bar1m['high']
+    bar1m['longLow'] = bar1m['low']
+    bar1m['shortLow'] = bar1m['low']
+    bar1m['highshift1'] = bar1m['high'].shift(1).fillna(0)
+    bar1m['lowshift1'] = bar1m['low'].shift(1).fillna(0)
+    bar1m.loc[bar1m['open'] < bar1m['close'], 'longHigh'] = bar1m['highshift1']
+    bar1m.loc[bar1m['open'] > bar1m['close'], 'shortLow'] = bar1m['lowshift1']
+
+    bar=pd.DataFrame()
+    bar['longHigh']=bar1m['longHigh']
+    bar['longLow']=bar1m['longLow']
+    bar['shortHigh']=bar1m['shortHigh']
+    bar['shortLow']=bar1m['shortLow']
+    bar['strtime']=bar1m['strtime']
+    bar['utc_time']=bar1m['utc_time']
+    #bar['Unnamed: 0']=bar1m['Unnamed: 0']
+    bar['Unnamed: 0'] = range(bar1m.shape[0])
+    bar['high']=bar1m['high']
+    bar['low']=bar1m['low']
+    return bar
+
 def max_draw(bardf):
     '''
     根据close的最大回撤值和比例
@@ -199,10 +222,16 @@ def getShortDrawbackByTick(bardf,stopTarget):
     return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
 
 
-def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder,indexcols):
+def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m_dic,barxm_dic,positionRatio,initialCash,slTarget,tofolder,indexcols):
     print 'sl;', str(slTarget), ',setname:', setname
-    symbol=symbolInfo.symbol
+    symbol=symbolInfo.domain_symbol
     oprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+
+    symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
+    bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1m_dic, symbolDomainDic)
+    bar1m = bar1mPrepare(bar1m)
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxm_dic, symbolDomainDic)
+
     oprdf['new_closeprice'] = oprdf['closeprice']
     oprdf['new_closetime'] = oprdf['closetime']
     oprdf['new_closeindex'] = oprdf['closeindex']
@@ -211,6 +240,7 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionR
     oprdf['min_opr_gain'] = 0#本次操作期间的最小收益
     oprdf['max_dd'] = 0
     oprnum = oprdf.shape[0]
+    pricetick = symbolInfo.getPriceTick()
     worknum=0
     for i in range(oprnum):
         opr = oprdf.iloc[i]
@@ -256,7 +286,7 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionR
                                                                                                       initialCash,
                                                                                                       positionRatio,ret_col='new_ret')
     #保存新的result文档
-    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
+    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv', index=False)
 
     olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
     #计算统计结果
@@ -265,14 +295,14 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionR
     dailyK=DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'))
+    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'), index=False)
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
 
     del oprdf
     #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
     return [setname,slTarget,worknum]+oldr+newr
 
-def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,positionRatio,initialCash,slTarget,tofolder,indexcols):
+def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1mdic,barxmdic,pricetick,positionRatio,initialCash,slTarget,tofolder,indexcols):
     '''
     增量式止损
     1.读取现有的止损文件，读取操作文件
@@ -282,11 +312,17 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
     5.保存文件，返回结果
     '''
     print 'sl;', str(slTarget), ',setname:', setname
-    symbol=symbolInfo.symbol
+    symbol=symbolInfo.domain_symbol
     orioprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+
+    symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
+    bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
+    bar1m = bar1mPrepare(bar1m)
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
+
     orioprnum = orioprdf.shape[0]
     dsldf = pd.read_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
-    dsldf.drop('Unnamed: 0.1',axis=1,inplace=True)
+    #dsldf.drop('Unnamed: 0.1',axis=1,inplace=True)
     dsloprnum=dsldf.shape[0]
     oprdf=dsldf
     if orioprnum>dsloprnum:
@@ -347,7 +383,7 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
                                                                                                           initialCash,
                                                                                                           positionRatio,ret_col='new_ret')
         #保存新的result文档
-        oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv')
+        oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv', index=False)
 
     #计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
@@ -357,7 +393,7 @@ def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,pricetick,p
     dailyK=DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'))
+    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'),index=False)
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
 
     del oprdf

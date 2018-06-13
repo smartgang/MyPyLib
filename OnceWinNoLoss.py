@@ -11,6 +11,29 @@ import os
 import ResultStatistics as RS
 import multiprocessing
 
+def bar1mPrepare(bar1m):
+    bar1m['longHigh'] = bar1m['high']
+    bar1m['shortHigh'] = bar1m['high']
+    bar1m['longLow'] = bar1m['low']
+    bar1m['shortLow'] = bar1m['low']
+    bar1m['highshift1'] = bar1m['high'].shift(1).fillna(0)
+    bar1m['lowshift1'] = bar1m['low'].shift(1).fillna(0)
+    bar1m.loc[bar1m['open'] < bar1m['close'], 'longHigh'] = bar1m['highshift1']
+    bar1m.loc[bar1m['open'] > bar1m['close'], 'shortLow'] = bar1m['lowshift1']
+
+    bar=pd.DataFrame()
+    bar['longHigh']=bar1m['longHigh']
+    bar['longLow']=bar1m['longLow']
+    bar['shortHigh']=bar1m['shortHigh']
+    bar['shortLow']=bar1m['shortLow']
+    bar['strtime']=bar1m['strtime']
+    bar['utc_time']=bar1m['utc_time']
+    #bar['Unnamed: 0']=bar1m['Unnamed: 0']
+    bar['Unnamed: 0'] = range(bar1m.shape[0])
+    bar['high']=bar1m['high']
+    bar['low']=bar1m['low']
+    return bar
+
 def getLongNoLossByTick(bardf,openprice,winSwitch,nolossThreshhold):
     '''
     1.计算截至当前的最大盈利：maxEarnRate:expanding().max()/openprice
@@ -141,10 +164,16 @@ def ownlCalRealTick(symbol,K_MIN,setname,ticksupplier,barxm,winSwitch,nolossThre
     oprdf.to_csv(tofolder + symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_realtick.csv')
 
 #================================================================================================
-def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder,indexcols):
+def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1mdic,barxmdic,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder,indexcols):
     print 'ownl;', str(winSwitch), ',setname:', setname
-    symbol=symbolInfo.symbol
+    symbol=symbolInfo.domain_symbol
     oprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+
+    symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
+    bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
+    bar1m = bar1mPrepare(bar1m)
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
+
     oprdf['new_closeprice'] = oprdf['closeprice']
     oprdf['new_closetime'] = oprdf['closetime']
     oprdf['new_closeindex'] = oprdf['closeindex']
@@ -185,7 +214,7 @@ def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossTh
                                                                                                       initialCash,
                                                                                                       positionRatio,ret_col='new_ret')
     #保存新的result文档
-    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
+    oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv', index=False)
 
     olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
     #计算统计结果
@@ -194,7 +223,7 @@ def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossTh
     dailyK=DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'))
+    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'), index=False)
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
     '''
     oldendcash = oprdf['own cash'].iloc[-1]
@@ -215,16 +244,22 @@ def ownlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossTh
 
 
 #================================================================================================
-def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder,indexcols):
+def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1mdic,barxmdic,winSwitch,nolossThreshhold,positionRatio,initialCash,tofolder,indexcols):
     '''
     增量式止损
     '''
     print 'ownl;', str(winSwitch), ',setname:', setname
-    symbol=symbolInfo.symbol
+    symbol=symbolInfo.domain_symbol
     orioprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+
+    symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
+    bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
+    bar1m = bar1mPrepare(bar1m)
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
+
     orioprnum = orioprdf.shape[0]
     ownldf=pd.read_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
-    ownldf.drop('Unnamed: 0.1',axis=1,inplace=True)
+    #ownldf.drop('Unnamed: 0.1',axis=1,inplace=True)
     ownloprnum=ownldf.shape[0]
     oprdf=ownldf
     if orioprnum>ownloprnum:
@@ -272,7 +307,7 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
                                                                                                           initialCash,
                                                                                                           positionRatio,ret_col='new_ret')
         #保存新的result文档
-        oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
+        oprdf.to_csv(tofolder+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv', index=False)
 
     #计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex']!=oprdf['closeindex']].shape[0]
@@ -282,7 +317,7 @@ def progressOwnlCal(strategyName,symbolInfo,K_MIN,setname,bar1m,barxm,winSwitch,
     dailyK=DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'))
+    dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'),index=False)
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
 
     del oprdf

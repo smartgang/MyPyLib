@@ -11,10 +11,15 @@ import multiprocessing
 from DynamicStopLoss import *
 from OnceWinNoLoss import  *
 
-def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,dailyK,positionRatio,initialCash,tofolder,indexcols):
+def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,barxmdic, positionRatio,initialCash,tofolder,indexcols):
     print 'setname:', setname
-    symbol=symbolInfo.symbol
+    symbol=symbolInfo.domain_symbol
     oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+
+    symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
+    dailyK = DC.generatDailyClose(barxm)
+
     oprlist=[]
     sltnum=len(stopLossTargetDictList)
     for i in range(sltnum):
@@ -87,7 +92,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
                                                                                                       symbolInfo,
                                                                                                       initialCash,
                                                                                                       positionRatio,ret_col='new_ret')
-    oprdf.to_csv(tofolder+'\\'+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv')
+    oprdf.to_csv(tofolder+'\\'+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv', index=False)
 
     #计算统计结果
     slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
@@ -96,7 +101,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
 
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv')
+    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv', index=False)
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
 
     return [setname,tofolder,slWorkNum,] + oldr + newr

@@ -21,9 +21,8 @@ def calWhiteResult(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthl
     根据月列表和白色窗口大小，计算推进过程中，每一期白区4个目标分别的结果，保存到4个result文件中
     :return:
     '''
-    print ('WhiteWindows:%d calculating forward result Start!'% whiteWindows)
-    print datetime.now()
-    symbol=symbolinfo.symbol
+    print ('WhiteWindows:%d calculating forward result.'% whiteWindows)
+    symbol=symbolinfo.domain_symbol
     parasetlen = parasetlist.shape[0]
     annual_total_list=[]
     sharpe_total_list=[]
@@ -90,8 +89,6 @@ def calWhiteResult(strategyName,whiteWindows,symbolinfo,K_MIN,parasetlist,monthl
     sharpedf.to_csv(filenamehead+'sharpe_result.csv')
     successdf.to_csv(filenamehead+'success_rate_result.csv')
     drawbackdf.to_csv(filenamehead+'drawback_result.csv')
-    print ('WhiteWindows:%d calculating forward result Finish!'% whiteWindows)
-    print datetime.now()
 
 def rankByWhiteResult(strategyName,symbolinfo,K_MIN,whiteWindows,datapath,resultpath):
     '''
@@ -99,9 +96,8 @@ def rankByWhiteResult(strategyName,symbolinfo,K_MIN,whiteWindows,datapath,result
     按列来，每列排序重置顺序，再加分
     :return:
     '''
-    print ('WhiteWindows:%d calculating rank result Start!'% whiteWindows)
-    print datetime.now()
-    symbol=symbolinfo.symbol
+    print ('WhiteWindows:%d calculating rank result!'% whiteWindows)
+    symbol=symbolinfo.domain_symbol
     datanamehead = ("%s_%s_%s_%d_win%d_" % (datapath, strategyName,symbol, K_MIN, whiteWindows))
     annualdf=pd.read_csv(datanamehead+'annual_result.csv')
     sharpedf=pd.read_csv(datanamehead+'sharpe_result.csv')
@@ -186,8 +182,6 @@ def rankByWhiteResult(strategyName,symbolinfo,K_MIN,whiteWindows,datapath,result
     rank5df.to_csv(resultnamehead+'Rank5.csv')
     rank6df.to_csv(resultnamehead + 'Rank6.csv')
     rank7df.to_csv(resultnamehead + 'Rank7.csv')
-    print ('WhiteWindows:%d calculating rank result Finished!'% whiteWindows)
-    print datetime.now()
 
 def calGrayResult(strategyName,symbol,K_MIN,windowsSet,rankpath,rawdatapath):
     '''
@@ -259,7 +253,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,dailyK,
     根据灰区的取值，取出各灰区的操作列表，组成目标集组的操作表，并计算各个评价指标
     :return:
     '''
-    symbol=symbolinfo.symbol
+    symbol=symbolinfo.domain_symbol
     graydf=pd.read_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+str(K_MIN)+'multiTargetForwardSetname.csv',index_col='Group')
     cols = graydf.columns.tolist()[3:]
     cols.append(nextmonth)
@@ -304,7 +298,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,dailyK,
         groupResult.append([gray.name,gray.Target,gray.Windows]+r)
 
     groupResultDf=pd.DataFrame(groupResult,columns=['Group','Target','Windows']+indexcols)
-    groupResultDf.to_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+'_'+str(K_MIN)+'_groupOprResult.csv')
+    groupResultDf.to_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+'_'+str(K_MIN)+'_groupOprResult.csv', index=False)
     pass
 
 def getColumnsName(new=True):
@@ -349,7 +343,7 @@ def  getMonthParameter(strategyName,startmonth,endmonth,symbolinfo,K_MIN,paraset
     :return:
     '''
     print ('Calculating month parameters,start from %s to %s' % (startmonth,endmonth))
-    symbol=symbolinfo.symbol
+    symbol=symbolinfo.domain_symbol
     parasetlen = parasetlist.shape[0]
     closeutc_col = columns['closeutc_col']
     retr_col = columns['retr_col']
