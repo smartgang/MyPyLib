@@ -24,7 +24,9 @@ def bar1mPrepare(bar1m):
     bar1m['lowshift1'] = bar1m['low'].shift(1).fillna(0)
     bar1m.loc[bar1m['open'] < bar1m['close'], 'longHigh'] = bar1m['highshift1']
     bar1m.loc[bar1m['open'] > bar1m['close'], 'shortLow'] = bar1m['lowshift1']
+    #bar1m['Unnamed: 0'] = range(bar1m.shape[0])
 
+    """
     bar=pd.DataFrame()
     bar['longHigh']=bar1m['longHigh']
     bar['longLow']=bar1m['longLow']
@@ -37,6 +39,8 @@ def bar1mPrepare(bar1m):
     bar['high']=bar1m['high']
     bar['low']=bar1m['low']
     return bar
+    """
+    return bar1m
 
 def max_draw(bardf):
     '''
@@ -44,7 +48,7 @@ def max_draw(bardf):
     :param df:
     :return:
     '''
-    df=pd.DataFrame({'close':bardf.close,'strtime':bardf['strtime'],'utc_time':bardf['utc_time'],'timeindex':bardf['Unnamed: 0']})
+    df=pd.DataFrame({'close':bardf.close,'strtime':bardf['strtime'],'utc_time':bardf['utc_time']})
 
     df['max2here']=df['close'].expanding().max()
     df['dd2here']=df['close']/df['max2here']-1
@@ -55,13 +59,12 @@ def max_draw(bardf):
     max = temp['max2here']
     strtime = temp['strtime']
     utctime = temp['utc_time']
-    timeindex = temp['timeindex']
+    #timeindex = temp['timeindex']
     #返回值为最大回撤比例，最大回撤价格，最大回撤的最高价,最大回撤时间和位置
-    return max_dd,max_dd_close,max,strtime,utctime,timeindex
+    return max_dd,max_dd_close,max,strtime,utctime,0
 
 def max_reverse_draw(bardf):
-    df = pd.DataFrame({'close': bardf.close, 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time'],
-                       'timeindex': bardf['Unnamed: 0']})
+    df = pd.DataFrame({'close': bardf.close, 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time']})
 
     df['min2here']=df['close'].expanding().min()
     df['dd2here']=1-df['close']/df['min2here']
@@ -72,12 +75,11 @@ def max_reverse_draw(bardf):
     min = temp['min2here']
     strtime = temp['strtime']
     utctime = temp['utc_time']
-    timeindex = temp['timeindex']
-    return max_dd,max_dd_close,min,strtime,utctime,timeindex
+    #timeindex = temp['timeindex']
+    return max_dd,max_dd_close,min,strtime,utctime,0
 
 def getLongDrawback(bardf,stopTarget):
-    df = pd.DataFrame({'close': bardf.close, 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time'],
-                       'timeindex': bardf['Unnamed: 0']})
+    df = pd.DataFrame({'close': bardf.close, 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time']})
     df['max2here']=df['close'].expanding().max()
     df['dd2here'] = df['close'] / df['max2here'] - 1
     df['dd'] = df['dd2here'] - stopTarget
@@ -89,19 +91,18 @@ def getLongDrawback(bardf,stopTarget):
         maxprice = temp['max2here']
         strtime = temp['strtime']
         utctime = temp['utc_time']
-        timeindex = temp['timeindex']
+        #timeindex = temp['timeindex']
     else:
         max_dd = 0
         max_dd_close = 0
         maxprice = 0
         strtime = ' '
         utctime = 0
-        timeindex = 0
-    return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
+        #timeindex = 0
+    return max_dd,max_dd_close,maxprice,strtime,utctime,0
 
 def getShortDrawback(bardf,stopTarget):
-    df = pd.DataFrame({'close': bardf.close, 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time'],
-                       'timeindex': bardf['Unnamed: 0']})
+    df = pd.DataFrame({'close': bardf.close, 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time']})
     df['min2here']=df['close'].expanding().min()
     df['dd2here'] = 1 - df['close'] / df['min2here']
     df['dd'] = df['dd2here'] - stopTarget
@@ -113,19 +114,18 @@ def getShortDrawback(bardf,stopTarget):
         maxprice = temp['min2here']
         strtime = temp['strtime']
         utctime = temp['utc_time']
-        timeindex = temp['timeindex']
+        #timeindex = temp['timeindex']
     else:
         max_dd = 0
         max_dd_close = 0
         maxprice = 0
         strtime = ' '
         utctime = 0
-        timeindex = 0
-    return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
+        #timeindex = 0
+    return max_dd,max_dd_close,maxprice,strtime,utctime,0
 
 def getLongDrawbackByRealtick(tickdf,stopTarget):
-    df = pd.DataFrame({'close': tickdf.last_price, 'strtime': tickdf['strtime'], 'utc_time': tickdf['utc_time'],
-                       'timeindex': tickdf['Unnamed: 0']})
+    df = pd.DataFrame({'close': tickdf.last_price, 'strtime': tickdf['strtime'], 'utc_time': tickdf['utc_time']})
     df['max2here']=df['close'].expanding().max()
     df['dd2here'] = df['close'] / df['max2here'] - 1
     df['dd'] = df['dd2here'] - stopTarget
@@ -137,19 +137,18 @@ def getLongDrawbackByRealtick(tickdf,stopTarget):
         maxprice = temp['max2here']
         strtime = temp['strtime']
         utctime = temp['utc_time']
-        timeindex = temp['timeindex']
+        #timeindex = temp['timeindex']
     else:
         max_dd = 0
         max_dd_close = 0
         maxprice = 0
         strtime = ' '
         utctime = 0
-        timeindex = 0
-    return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
+        #timeindex = 0
+    return max_dd,max_dd_close,maxprice,strtime,utctime,0
 
 def getShortDrawbackByRealtick(tickdf,stopTarget):
-    df = pd.DataFrame({'close': tickdf.last_price, 'strtime': tickdf['strtime'], 'utc_time': tickdf['utc_time'],
-                       'timeindex': tickdf['Unnamed: 0']})
+    df = pd.DataFrame({'close': tickdf.last_price, 'strtime': tickdf['strtime'], 'utc_time': tickdf['utc_time']})
     df['min2here']=df['close'].expanding().min()
     df['dd2here'] = 1 - df['close'] / df['min2here']
     df['dd'] = df['dd2here'] - stopTarget
@@ -161,21 +160,20 @@ def getShortDrawbackByRealtick(tickdf,stopTarget):
         maxprice = temp['min2here']
         strtime = temp['strtime']
         utctime = temp['utc_time']
-        timeindex = temp['timeindex']
+        #timeindex = temp['timeindex']
     else:
         max_dd = 0
         max_dd_close = 0
         maxprice = 0
         strtime = ' '
         utctime = 0
-        timeindex = 0
-    return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
+        #timeindex = 0
+    return max_dd,max_dd_close,maxprice,strtime,utctime,0
 
 
 
 def getLongDrawbackByTick(bardf,stopTarget):
-    df = pd.DataFrame({'high': bardf['longHigh'],'low':bardf['longLow'], 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time'],
-                       'timeindex': bardf['Unnamed: 0']})
+    df = pd.DataFrame({'high': bardf['longHigh'],'low':bardf['longLow'], 'strtime': bardf['strtime'], 'utc_time': bardf['utc_time']})
     df['max2here']=df['high'].expanding().max()
     df['dd2here'] = df['low'] / df['max2here'] - 1
     df['dd'] = df['dd2here'] - stopTarget
@@ -187,19 +185,18 @@ def getLongDrawbackByTick(bardf,stopTarget):
         maxprice = temp['max2here']
         strtime = temp['strtime']
         utctime = temp['utc_time']
-        timeindex = temp['timeindex']
+        #timeindex = temp['timeindex']
     else:
         max_dd = 0
         max_dd_close = 0
         maxprice = 0
         strtime = ' '
         utctime = 0
-        timeindex = 0
-    return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
+        #timeindex = 0
+    return max_dd,max_dd_close,maxprice,strtime,utctime,0
 
 def getShortDrawbackByTick(bardf,stopTarget):
-    df = pd.DataFrame({'high': bardf['shortHigh'],'low':bardf['shortLow'] ,'strtime': bardf['strtime'], 'utc_time': bardf['utc_time'],
-                       'timeindex': bardf['Unnamed: 0']})
+    df = pd.DataFrame({'high': bardf['shortHigh'],'low':bardf['shortLow'] ,'strtime': bardf['strtime'], 'utc_time': bardf['utc_time']})
     df['min2here']=df['low'].expanding().min()
     df['dd2here'] = 1 - df['high'] / df['min2here']
     df['dd'] = df['dd2here'] - stopTarget
@@ -211,27 +208,35 @@ def getShortDrawbackByTick(bardf,stopTarget):
         maxprice = temp['min2here']
         strtime = temp['strtime']
         utctime = temp['utc_time']
-        timeindex = temp['timeindex']
+        #timeindex = temp['timeindex']
     else:
         max_dd = 0
         max_dd_close = 0
         maxprice = 0
         strtime = ' '
         utctime = 0
-        timeindex = 0
-    return max_dd,max_dd_close,maxprice,strtime,utctime,timeindex
+        #timeindex = 0
+    return max_dd,max_dd_close,maxprice,strtime,utctime,0
 
 
-def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m_dic,barxm_dic,positionRatio,initialCash,slTarget,tofolder,indexcols):
+def dslCal(strategyName,symbolInfo,K_MIN,setname,oprdf, bar1m,barxm,positionRatio,initialCash,slTarget,tofolder,indexcols):
     print 'sl;', str(slTarget), ',setname:', setname
     symbol=symbolInfo.domain_symbol
-    oprdf = pd.read_csv(strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
-
+    """
+    oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    #timeopr = time.time()
+    #print ("oprtime %.3f" % (timeopr - timedatastart))
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
-    bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1m_dic, symbolDomainDic)
+    #timeamend = time.time()
+    #print ("amendtime %.3f" % (timeamend - timeopr))
+    bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
+    #timebar1m = time.time()
+    #print("bar1mtime %.3f" % (timebar1m - timeamend))
     bar1m = bar1mPrepare(bar1m)
-    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxm_dic, symbolDomainDic)
-
+    #timepre1m = time.time()
+    #print ("preparetime %.3f" % (timepre1m - timebar1m))
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
+    """
     oprdf['new_closeprice'] = oprdf['closeprice']
     oprdf['new_closetime'] = oprdf['closetime']
     oprdf['new_closeindex'] = oprdf['closeindex']
@@ -297,9 +302,10 @@ def dslCal(strategyName,symbolInfo,K_MIN,setname,bar1m_dic,barxm_dic,positionRat
     dR.calDailyResult()
     dR.dailyClose.to_csv((tofolder+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'), index=False)
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
-
+    print ("%s done!" % setname)
     del oprdf
     #return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+
     return [setname,slTarget,worknum]+oldr+newr
 
 def progressDslCal(strategyName,symbolInfo,K_MIN,setname,bar1mdic,barxmdic,pricetick,positionRatio,initialCash,slTarget,tofolder,indexcols):

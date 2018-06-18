@@ -98,19 +98,50 @@ def getBarBySymbolList(domain_symbol, symbollist, bar_type, startdate=None, endd
         bardic[symbol] = bardf
     return bardic
 
+def getBarDic(symbolinfo, bar_type):
+    # 取全部主力合约的数据，以dic的形式返回
+    domain_symbol = symbolinfo.domain_symbol
+    symbollist = symbolinfo.getSymbolList()
+    bardic = {}
+    startutc , endutc = symbolinfo.getUtcRange()
+    for symbol in symbollist:
+        domain_utc_start, domain_utc_end = symbolinfo.getSymbolDomainUtc(symbol)
+        filename = BAR_DATA_PATH + domain_symbol + '\\' + symbol + ' ' + str(bar_type) + '.csv'
+        bardf = pd.read_csv(filename)
+        bardf = bardf.loc[bardf['utc_time']>=domain_utc_start]  # 只取主力时间之后的数据，以减少总的数据量
+        if startutc:
+            bardf = bardf.loc[bardf['utc_time'] >= startutc]
+        if endutc:
+            bardf = bardf.loc[bardf['utc_time'] <= endutc]
+        bardic[symbol] = bardf
+    return bardic
 
 def getDomainbarByDomainSymbol(symbollist, bardic, symbolDomaindic):
     # 根据symbolDomaindic中每个合约的时间范围，从bardic中取数组合成主连数据
     # 默认双边的symbol是对得上的，不做检查
     domain_bar = pd.DataFrame()
+    barlist = []
+    #timestart = time.time()
     for symbol in symbollist:
         utcs = symbolDomaindic[symbol]
         bars = bardic[symbol]
         symbol_domain_start = utcs[0]
         symbol_domain_end = utcs[1]
         bar = bars.loc[(bars['utc_time'] >= symbol_domain_start) & (bars['utc_endtime'] < symbol_domain_end)]
-        domain_bar = pd.concat([domain_bar, bar])
+        #domain_bar = pd.concat([domain_bar, bar])
+        #domain_bar = domain_bar.append(bar)
+        barlist.append(bar)
+    #timebar = time.time()
+    #print ("timebar %.3f" % (timebar - timestart))
+    domain_bar = pd.concat(barlist)
+    #timeconcat = time.time()
+    #print ("timeconcat %.3f" % (timeconcat - timebar))
+    #domain_bar.sort_values('utc_time',inplace=True)    # 本来有sort会妥当一点，不过sort比较耗时，就去掉了
+    #timesort = time.time()
+    #print ("timesort %.3f" % (timesort - timeconcat))
     domain_bar.reset_index(drop=True, inplace=True)
+    #timeindex = time.time()
+    #print ("timeindex %.3f" % (timeindex - timeconcat))
     return domain_bar
 
 
@@ -228,16 +259,17 @@ class SymbolInfo:
         self.domain_symbol = domain_symbol
         contract = pd.read_excel(PUBLIC_DATA_PATH + 'domainMap.xlsx', index_col='symbol')
         contractMapDf = pd.read_csv(PUBLIC_DATA_PATH + 'contractMap.csv', index_col='symbol')
-
+        self.start_utc = None
+        self.end_utc = None
         self.contractMap = contractMapDf.loc[contractMapDf['domain_symbol'] == domain_symbol]  # 取该主力合约编号对应的合约列表
         if startdate:
             # 过滤掉主力结束时间在开始时间之前的，只取主力结束时间在开始时间之后
-            startutc = float(time.mktime(time.strptime(startdate+ " 00:00:00", "%Y-%m-%d %H:%M:%S")))
-            self.contractMap = self.contractMap.loc[self.contractMap['domain_end_utc'] > startutc]
+            self.start_utc = float(time.mktime(time.strptime(startdate+ " 00:00:00", "%Y-%m-%d %H:%M:%S")))
+            self.contractMap = self.contractMap.loc[self.contractMap['domain_end_utc'] > self.start_utc]
         if enddate:
             # 过滤掉主力开始时间在结束时间之后的，只取主力开始时间在结束时间之前
-            endutc = float(time.mktime(time.strptime(enddate + " 23:59:59", "%Y-%m-%d %H:%M:%S")))
-            self.contractMap = self.contractMap.loc[self.contractMap['domain_start_utc'] < endutc]
+            self.end_utc = float(time.mktime(time.strptime(enddate + " 23:59:59", "%Y-%m-%d %H:%M:%S")))
+            self.contractMap = self.contractMap.loc[self.contractMap['domain_start_utc'] < self.end_utc]
 
         self.contractMap = self.contractMap.sort_values('domain_start_utc')  # 根据主力时间排序
 
@@ -273,6 +305,9 @@ class SymbolInfo:
 
     def getSymbolDomainTime(self, symbol):
         return self.contractMap.ix[symbol, 'domain_start_date'], self.contractMap.ix[symbol, 'domain_end_date']
+
+    def getUtcRange(self):
+        return self.start_utc, self.end_utc
 
     def getSymbolDomainDic(self):
         domainDic = {}
