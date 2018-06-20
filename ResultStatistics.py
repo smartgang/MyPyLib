@@ -240,7 +240,10 @@ def sharpe(resultdf,new=False):
     annual=pow(endcash / startcash, 365 / datenum) - 1
 
     # 计算夏普比率
-    return (annual - rf) / vol
+    if vol:
+        return (annual - rf) / vol
+    else:
+        return 0
 
 def sr(resultdf,new=False):
     '''成功率'''
