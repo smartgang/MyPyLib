@@ -14,9 +14,9 @@ VOLUME_DATA_PATH = unicode('D:\\002 MakeLive\DataCollection\\volume data\\', 'ut
 TICKS_DATA_START_DATE = '2017-8-17'  # 包含了8-17日
 LAST_CONCAT_DATA = '2017-10-17'  # 记录上次汇总数据的时间，不包含当天（要再加上一天，要不然后面truncate会不对）
 
-DATA_TYPE_PUBLIC = 1
-DATA_TYPE_RAW = 2
-DATA_TYPE_TICKS = 3
+DATA_TYPE_PUBLIC=1
+DATA_TYPE_RAW=2
+DATA_TYPE_TICKS=3
 
 
 def getTradedates(exchangeid='SHFE', startdate='2016-01-01', enddate='2017-12-30'):
@@ -98,7 +98,7 @@ def getBarBySymbolList(domain_symbol, symbollist, bar_type, startdate=None, endd
         bardic[symbol] = bardf
     return bardic
 
-def getBarDic(symbolinfo, bar_type):
+def getBarDic(symbolinfo, bar_type,cols=None):
     # 取全部主力合约的数据，以dic的形式返回
     domain_symbol = symbolinfo.domain_symbol
     symbollist = symbolinfo.getSymbolList()
@@ -107,7 +107,10 @@ def getBarDic(symbolinfo, bar_type):
     for symbol in symbollist:
         domain_utc_start, domain_utc_end = symbolinfo.getSymbolDomainUtc(symbol)
         filename = BAR_DATA_PATH + domain_symbol + '\\' + symbol + ' ' + str(bar_type) + '.csv'
-        bardf = pd.read_csv(filename)
+        if cols:
+            bardf = pd.read_csv(filename)[cols]
+        else:
+            bardf = pd.read_csv(filename)
         bardf = bardf.loc[bardf['utc_time']>=domain_utc_start]  # 只取主力时间之后的数据，以减少总的数据量
         if startutc:
             bardf = bardf.loc[bardf['utc_time'] >= startutc]
