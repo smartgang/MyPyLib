@@ -130,7 +130,7 @@ def getDomainbarByDomainSymbol(symbollist, bardic, symbolDomaindic):
         bars = bardic[symbol]
         symbol_domain_start = utcs[0]
         symbol_domain_end = utcs[1]
-        bar = bars.loc[(bars['utc_time'] >= symbol_domain_start) & (bars['utc_endtime'] < symbol_domain_end)]
+        bar = bars.loc[(bars['utc_time'] >= symbol_domain_start) & (bars['utc_time'] <= symbol_domain_end)]
         #domain_bar = pd.concat([domain_bar, bar])
         #domain_bar = domain_bar.append(bar)
         barlist.append(bar)
