@@ -248,13 +248,18 @@ def getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmo
     oprdf=oprdf.loc[(oprdf['openutc'] >= startutc) & (oprdf['openutc'] < endutc)]
     return oprdf[['opentime','openutc','openindex','openprice',closetime_col,closeutc_col,closeindex_col,closeprice_col,'tradetype',ret_col,retr_col]]
 
-def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,dailyK,positionRatio,initialCash,indexcols,indexcolsFlag,resultfilesuffix='result.csv'):
+def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,barxmdic,positionRatio,initialCash,indexcols,indexcolsFlag,resultfilesuffix='result.csv'):
     '''
     根据灰区的取值，取出各灰区的操作列表，组成目标集组的操作表，并计算各个评价指标
     :return:
     '''
     symbol=symbolinfo.domain_symbol
     graydf=pd.read_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+str(K_MIN)+'multiTargetForwardSetname.csv',index_col='Group')
+
+    symbolDomainDic = symbolinfo.amendSymbolDomainDicByOpr(graydf)
+    barxm = DC.getDomainbarByDomainSymbol(symbolinfo.getSymbolList(), barxmdic, symbolDomainDic)
+    dailyK = DC.generatDailyClose(rawdata)  # 生成按日的K线
+
     cols = graydf.columns.tolist()[3:]
     cols.append(nextmonth)
     groupResult = []
