@@ -271,7 +271,7 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,barxmdi
     for i in range(graydf.shape[0]):
         gray=graydf.iloc[i]
         oprdf = pd.DataFrame(columns=['opentime', 'openutc', 'openindex', 'openprice', closetime_col, closeutc_col, closeindex_col,
-                     closeprice_col, 'tradetype', ret_col, retr_col])
+                     closeprice_col, 'tradetype', ret_col, retr_col, 'symbol'])
         print gray.name,gray.Target,gray.Windows
         for l in range(len(cols)-1):
             startmonth=cols[l]
@@ -289,10 +289,10 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,barxmdi
         tofilename=('%s %s%d_%s_win%d_oprResult.csv'%(strategyName,symbol,K_MIN,gray.Target,gray.Windows))
         oprdf.to_csv(rawpath+'ForwardOprAnalyze\\'+tofilename)
 
-        symbolDomainDic = symbolinfo.amendSymbolDomainDicByOpr(oprdf)
+        symbolDomainDic = symbolinfo.amendSymbolDomainDicByOpr(oprdf, closeutc_col=closeutc_col)
         barxm = DC.getDomainbarByDomainSymbol(symbolinfo.getSymbolList(), barxmdic, symbolDomainDic)
         dailyK = DC.generatDailyClose(barxm)  # 生成按日的K线
-        
+
         dR = RS.dailyReturn(symbolinfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
         dR.calDailyResult()
         tofilename = ('%s %s%d_%s_win%d_oprdailyResult.csv' % (strategyName, symbol, K_MIN, gray.Target, gray.Windows))

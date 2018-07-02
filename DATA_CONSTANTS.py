@@ -320,11 +320,11 @@ class SymbolInfo:
             domainDic[symbol] = [s, e]
         return domainDic
 
-    def amendSymbolDomainDicByOpr(self, oprdf):
+    def amendSymbolDomainDicByOpr(self, oprdf, closeutc_col='closeutc'):
         # 基于传入的oprdf修正symbolDomainDic,因为合约切换时，会有持仓未平仓导致上一合约实际生效时间超过其主力结束时间的现象，故要修改正symbolDomainDic
         # 注：可能会有些合适期间没有opr的情况，所以symbolList会比opr中的symbollist少
         oprgrouped = oprdf.groupby('symbol')
-        symbol_last_utc_list = oprgrouped['closeutc'].last()
+        symbol_last_utc_list = oprgrouped[closeutc_col].last()
         opr_symbol_list = symbol_last_utc_list.index.tolist()
         symbol_last_utc = None
         domainDic = {}
