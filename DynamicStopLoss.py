@@ -304,7 +304,7 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, positio
     dailyK = DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'), index=False)
+    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'))
     newr = RS.getStatisticsResult(oprdf, True, indexcols, dR.dailyClose)
 
     del oprdf
@@ -405,7 +405,7 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
     dailyK = DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'), index=False)
+    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultDSL_by_tick.csv'))
     newr = RS.getStatisticsResult(oprdf, True, indexcols, dR.dailyClose)
 
     del oprdf

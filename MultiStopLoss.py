@@ -101,7 +101,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
 
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv', index=False)
+    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv')
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
 
     return [setname,tofolder,slWorkNum,] + oldr + newr

@@ -215,7 +215,7 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwi
     dailyK = DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'), index=False)
+    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'))
     newr = RS.getStatisticsResult(oprdf, True, indexcols, dR.dailyClose)
     '''
     oldendcash = oprdf['own cash'].iloc[-1]
@@ -309,7 +309,7 @@ def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     dailyK = DC.generatDailyClose(barxm)
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'), index=False)
+    dR.dailyClose.to_csv((tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresultOWNL_by_tick.csv'))
     newr = RS.getStatisticsResult(oprdf, True, indexcols, dR.dailyClose)
 
     del oprdf
