@@ -256,10 +256,6 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,barxmdi
     symbol=symbolinfo.domain_symbol
     graydf=pd.read_csv(rawpath+'ForwardOprAnalyze\\'+strategyName+' '+symbol+str(K_MIN)+'multiTargetForwardSetname.csv',index_col='Group')
 
-    symbolDomainDic = symbolinfo.amendSymbolDomainDicByOpr(graydf)
-    barxm = DC.getDomainbarByDomainSymbol(symbolinfo.getSymbolList(), barxmdic, symbolDomainDic)
-    dailyK = DC.generatDailyClose(rawdata)  # 生成按日的K线
-
     cols = graydf.columns.tolist()[3:]
     cols.append(nextmonth)
     groupResult = []
@@ -293,6 +289,10 @@ def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,barxmdi
         tofilename=('%s %s%d_%s_win%d_oprResult.csv'%(strategyName,symbol,K_MIN,gray.Target,gray.Windows))
         oprdf.to_csv(rawpath+'ForwardOprAnalyze\\'+tofilename)
 
+        symbolDomainDic = symbolinfo.amendSymbolDomainDicByOpr(oprdf)
+        barxm = DC.getDomainbarByDomainSymbol(symbolinfo.getSymbolList(), barxmdic, symbolDomainDic)
+        dailyK = DC.generatDailyClose(barxm)  # 生成按日的K线
+        
         dR = RS.dailyReturn(symbolinfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
         dR.calDailyResult()
         tofilename = ('%s %s%d_%s_win%d_oprdailyResult.csv' % (strategyName, symbol, K_MIN, gray.Target, gray.Windows))
