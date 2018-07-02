@@ -176,6 +176,8 @@ def success_rate(resultdf,ret_col='ret'):
     '''
     successcount=resultdf.loc[resultdf[ret_col]>0].shape[0]
     totalcount=resultdf.shape[0]
+    if totalcount == 0:
+        return 0
     return successcount/float(totalcount)
 
 #===================================重新包装===============================
