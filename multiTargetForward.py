@@ -246,7 +246,7 @@ def getOprlistByMonth(strategyName,rawpath,symbol,K_MIN,setname,startmonth,endmo
     f=rawpath+filename
     oprdf=pd.read_csv(f)
     oprdf=oprdf.loc[(oprdf['openutc'] >= startutc) & (oprdf['openutc'] < endutc)]
-    return oprdf[['opentime','openutc','openindex','openprice',closetime_col,closeutc_col,closeindex_col,closeprice_col,'tradetype',ret_col,retr_col]]
+    return oprdf[['opentime','openutc','openindex','openprice',closetime_col,closeutc_col,closeindex_col,closeprice_col,'tradetype',ret_col,retr_col], 'symbol']
 
 def calOprResult(strategyName,rawpath,symbolinfo,K_MIN,nextmonth,columns,barxmdic,positionRatio,initialCash,indexcols,indexcolsFlag,resultfilesuffix='result.csv'):
     '''
