@@ -332,7 +332,7 @@ class SymbolInfo:
         for symbol in symbolList:
             s, e = self.getSymbolDomainUtc(symbol)
             if symbol_last_utc:
-                s = symbol_last_utc
+                s = symbol_last_utc + 1 # 如果上一个合约的最后一次操作超过其主力结束时间，则下一合约从其最后操作结束时间的下一秒开始算，规避取出两个合约同一个时间的数据的问题
             if symbol in opr_symbol_list:
                 symbol_last_utc = symbol_last_utc_list[symbol]
             if symbol_last_utc and symbol_last_utc > e:
