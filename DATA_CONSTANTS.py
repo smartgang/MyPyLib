@@ -95,7 +95,7 @@ def getBarBySymbolList(domain_symbol, symbollist, bar_type, startdate=None, endd
             bardf = bardf.loc[bardf['utc_time'] >= startutc]
         if endutc:
             bardf = bardf.loc[bardf['utc_time'] <= endutc]
-        bardic[symbol] = bardf
+        bardic[symbol] = bardf.reset_index(drop=True)
     return bardic
 
 def getBarDic(symbolinfo, bar_type,cols=None):
@@ -308,6 +308,10 @@ class SymbolInfo:
 
     def getSymbolDomainTime(self, symbol):
         return self.contractMap.ix[symbol, 'domain_start_date'], self.contractMap.ix[symbol, 'domain_end_date']
+
+    def getSymbolLifeDate(self, symbol):
+        # 获取合约的生命周期时间
+        return self.contractMap.ix[symbol, 'listed_date'], self.contractMap.ix[symbol, 'maturity_date']
 
     def getUtcRange(self):
         return self.start_utc, self.end_utc
