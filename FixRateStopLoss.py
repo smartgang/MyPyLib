@@ -141,7 +141,7 @@ def frslCalRealTick(strategyName, symbol, K_MIN, setname, ticksupplier, barxm, f
 
 
 # ================================================================================================
-def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate, positionRatio, initialCash, tofolder, indexcols):
+def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate, result_para_dic, tofolder, indexcols):
     print ("frsl_target:%.3f ,setname:%s" % (fixRate, setname))
     symbol = symbolInfo.domain_symbol
     pricetick = symbolInfo.getPriceTick()
@@ -151,6 +151,9 @@ def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRat
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
     bar1m = bar1mPrepare(bar1m)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
+
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
 
     oprdf['new_closeprice'] = oprdf['closeprice']
     oprdf['new_closetime'] = oprdf['closetime']
@@ -210,7 +213,7 @@ def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRat
 
 
 # ================================================================================================
-def progressFrslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate, positionRatio, initialCash, tofolder, indexcols):
+def progressFrslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate, result_para_dic, tofolder, indexcols):
     """
     增量式止损
     """
@@ -218,6 +221,9 @@ def progressFrslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     symbol = symbolInfo.domain_symbol
     pricetick = symbolInfo.getPriceTick()
     orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
 
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(orioprdf)
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
