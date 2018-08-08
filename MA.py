@@ -6,7 +6,7 @@
 '''
 import pandas as pd
 import numpy as np
-#import talib
+import talib
 
 
 def calMACD(closedata, short=12, long1=26, mid=9):
@@ -18,17 +18,18 @@ def calMACD(closedata, short=12, long1=26, mid=9):
     :param mid:
     :return:MACD,DEA,Bar,SEMA,LEMA
     '''
-    #sema = pd.ewma(closedata, span=short)
+    # sema = pd.ewma(closedata, span=short)
     # lema  = pd.ewma(closedata, span=long1)
-    sema=closedata.ewm(span=short,adjust=False).mean()
-    lema=closedata.ewm(span=long1,adjust=False).mean()
-    data_dif= sema - lema
-    #data_dea = pd.ewma(data_dif, span=mid)
-    data_dea = data_dif.ewm(span=mid,adjust=False).mean()
+    sema = closedata.ewm(span=short, adjust=False).mean()
+    lema = closedata.ewm(span=long1, adjust=False).mean()
+    data_dif = sema - lema
+    # data_dea = pd.ewma(data_dif, span=mid)
+    data_dea = data_dif.ewm(span=mid, adjust=False).mean()
     data_bar = 2 * (data_dif - data_dea)
-    return data_dif,data_dea,data_bar,sema,lema
+    return data_dif, data_dea, data_bar, sema, lema
 
-def calNewMACD(lastClose,dea,sema,lema):
+
+def calNewMACD(lastClose, dea, sema, lema):
     '''
     计算单个MACD值
     :param closedata: 收盘价
@@ -37,12 +38,13 @@ def calNewMACD(lastClose,dea,sema,lema):
     :param lema:
     :return: MACD,DEA,BAR,SEMA,LEMA
     '''
-    newSema=sema*11/13+float(lastClose)*2/13
-    newLema=lema*25/27+float(lastClose)*2/27
-    newMACD=newSema-newLema
-    newDea=dea*8/10+newMACD*2/10
-    newBar=(newMACD-newDea)*2
-    return newMACD,newDea,newBar,newSema,newLema
+    newSema = sema * 11 / 13 + float(lastClose) * 2 / 13
+    newLema = lema * 25 / 27 + float(lastClose) * 2 / 27
+    newMACD = newSema - newLema
+    newDea = dea * 8 / 10 + newMACD * 2 / 10
+    newBar = (newMACD - newDea) * 2
+    return newMACD, newDea, newBar, newSema, newLema
+
 
 def calKDJ(data, N=0, M=0):
     if N == 0:
@@ -53,18 +55,19 @@ def calKDJ(data, N=0, M=0):
     low_list.fillna(value=pd.expanding_min(data['low']), inplace=True)
     high_list = pd.rolling_max(data['high'], N)
     high_list.fillna(value=pd.expanding_max(data['high']), inplace=True)
-    #low_list = data['row'].rolling(window=N).min()
-    #low_list.fillna(value=data['low'].expanding().min(),inplace=True)
-    #high_list = data['high'].rolling(window=N).max()
-    #high_list.fillna(value=data['high'].expanding().max(),inplace=True)
+    # low_list = data['row'].rolling(window=N).min()
+    # low_list.fillna(value=data['low'].expanding().min(),inplace=True)
+    # high_list = data['high'].rolling(window=N).max()
+    # high_list.fillna(value=data['high'].expanding().max(),inplace=True)
     rsv = (data['close'] - low_list) / (high_list - low_list) * 100
     KDJ_K = pd.ewma(rsv, com=M)
     KDJ_D = pd.ewma(KDJ_K, com=M)
     KDJ_J = 3 * KDJ_K - 2 * KDJ_D
-    #kdjdata.fillna(0, inplace=True)
-    return low_list,high_list,rsv,KDJ_K, KDJ_D, KDJ_J
+    # kdjdata.fillna(0, inplace=True)
+    return low_list, high_list, rsv, KDJ_K, KDJ_D, KDJ_J
 
-def calNewKDJ(data,kdjdata,N=9,M=2):
+
+def calNewKDJ(data, kdjdata, N=9, M=2):
     '''
     计算单个KDJ的值
     1: 获取股票T日收盘价X
@@ -77,38 +80,41 @@ def calNewKDJ(data,kdjdata,N=9,M=2):
 
     :return:
     '''
-    datarow=data.shape[0]
+    datarow = data.shape[0]
     kdjrow = kdjdata.shape[0]
-    closeT=data.ix[datarow-1,'close']
-    Ln=min(data.ix[datarow-9:,'low'])
-    Hn=max(data.ix[datarow-9:,'high'])
-    if Hn==Ln:#防止出现Hn和Ln相等，导致分母为0的情况
-        rsv=100
-    else :
-        rsv=(closeT-Ln)/(Hn-Ln)*100
-    lastK=kdjdata.ix[kdjrow-1,'KDJ_K']
-    lastD=kdjdata.ix[kdjrow-1,'KDJ_D']
-    newK=0.66667*lastK+0.33333*rsv#不能用2/3和1/3来算，会变成int，结果变0
-    newD=0.66667*lastD+0.33333*newK
-    newJ=3*newK-2*newD
-    kdjdata.loc[kdjrow]=[data.ix[datarow-1,'strdatetime'],data.ix[datarow-1,'utcdatetime'],Ln,Hn,rsv,newK,newD,newJ]
-    #kdjdata.loc[kdjrow] = [data.ix[datarow-1, 'start_time'], rsv,Ln, Hn, newK, newD, newJ]
+    closeT = data.ix[datarow - 1, 'close']
+    Ln = min(data.ix[datarow - 9:, 'low'])
+    Hn = max(data.ix[datarow - 9:, 'high'])
+    if Hn == Ln:  # 防止出现Hn和Ln相等，导致分母为0的情况
+        rsv = 100
+    else:
+        rsv = (closeT - Ln) / (Hn - Ln) * 100
+    lastK = kdjdata.ix[kdjrow - 1, 'KDJ_K']
+    lastD = kdjdata.ix[kdjrow - 1, 'KDJ_D']
+    newK = 0.66667 * lastK + 0.33333 * rsv  # 不能用2/3和1/3来算，会变成int，结果变0
+    newD = 0.66667 * lastD + 0.33333 * newK
+    newJ = 3 * newK - 2 * newD
+    kdjdata.loc[kdjrow] = [data.ix[datarow - 1, 'strdatetime'], data.ix[datarow - 1, 'utcdatetime'], Ln, Hn, rsv, newK, newD, newJ]
+    # kdjdata.loc[kdjrow] = [data.ix[datarow-1, 'start_time'], rsv,Ln, Hn, newK, newD, newJ]
     pass
 
+
 def calMA(data, N=5):
-    #data = pd.rolling_mean(data, N)
+    # data = pd.rolling_mean(data, N)
     data = data.rolling(N).mean()
     data.fillna(0, inplace=True)
     return data
 
-def calEMA(data,N=5):
-    #ewm的adjust必须设为False，按如下公式算
-    #y0 = x0
-    #yt= (1−α)yt−1 + αxt,
-    data = data.ewm(span=N,adjust=False).mean()
+
+def calEMA(data, N=5):
+    # ewm的adjust必须设为False，按如下公式算
+    # y0 = x0
+    # yt= (1−α)yt−1 + αxt,
+    data = data.ewm(span=N, adjust=False).mean()
     return data
 
-def calNewMA(data,N=5):
+
+def calNewMA(data, N=5):
     '''
     data的最后N个取值计算平均值
     :param data:
@@ -116,10 +122,11 @@ def calNewMA(data,N=5):
     :return:
     '''
     return data.iloc[-N:].mean()
-    #row=data.shape[0]
-    #return sum(data[row-N:row])/N
+    # row=data.shape[0]
+    # return sum(data[row-N:row])/N
 
-def calWMA(data,weight,N=5):
+
+def calWMA(data, weight, N=5):
     '''
     计算加权移动平均
     :param data:
@@ -127,17 +134,18 @@ def calWMA(data,weight,N=5):
     :param N:
     :return:
     '''
-    l=len(weight)
-    d=data
-    dl=d.shape[0]
-    if l!=N:return
-    arrWeight=np.array(weight)
-    wma=pd.Series(0.0)
-    for i in range(l-1,dl):
-        wma[i]=sum(arrWeight*d[(i-l+1):(i+1)])
+    l = len(weight)
+    d = data
+    dl = d.shape[0]
+    if l != N: return
+    arrWeight = np.array(weight)
+    wma = pd.Series(0.0)
+    for i in range(l - 1, dl):
+        wma[i] = sum(arrWeight * d[(i - l + 1):(i + 1)])
     return wma
 
-def calNewWMA(data,weight,N=5):
+
+def calNewWMA(data, weight, N=5):
     '''
     计算最后一个WMA的值
     :param data:
@@ -145,11 +153,12 @@ def calNewWMA(data,weight,N=5):
     :param N:
     :return:
     '''
-    l=len(weight)
-    dl=data.shape[0]
-    if l!=N:return
-    arrWeight=np.array(weight)
-    return sum(arrWeight*data[dl-N:dl])
+    l = len(weight)
+    dl = data.shape[0]
+    if l != N: return
+    arrWeight = np.array(weight)
+    return sum(arrWeight * data[dl - N:dl])
+
 
 def get_rsi_data(data, N=0):
     if N == 0:
@@ -185,80 +194,117 @@ def get_cci_data(data, N=0):
     cci = pd.DataFrame(cci, columns=['cci'])
     return cci
 
-def sum_N(data,n):
-    tempdf=pd.DataFrame({'0':data})
-    for i in np.arange(1,n):
-        tempdf[str(i)]=tempdf['0'].shift(i)
-    tempdf=tempdf.fillna(0)
-    temp=tempdf.sum(axis=1)
+
+def sum_N(data, n):
+    tempdf = pd.DataFrame({'0': data})
+    for i in np.arange(1, n):
+        tempdf[str(i)] = tempdf['0'].shift(i)
+    tempdf = tempdf.fillna(0)
+    temp = tempdf.sum(axis=1)
     del tempdf
     return temp
 
-def dfCross(dfx,colum1,colum2):
-    dfx['true']=0
+
+def dfCross(dfx, colum1, colum2):
+    dfx['true'] = 0
     dfx.loc[dfx[colum1] > dfx[colum2], 'true'] = 1
     dfx.loc[dfx[colum1] < dfx[colum2], 'true'] = -1
 
-    if dfx.ix[0,'true']==0:
-        dfx.ix[0,'true']=1
-    #填充0值，修改为上一周期的取值
-    zeroindex=dfx.loc[dfx['true']==0].index
+    if dfx.ix[0, 'true'] == 0:
+        dfx.ix[0, 'true'] = 1
+    # 填充0值，修改为上一周期的取值
+    zeroindex = dfx.loc[dfx['true'] == 0].index
     for zi in zeroindex:
-        dfx.ix[zi,'true']=dfx.ix[zi-1,'true']
+        dfx.ix[zi, 'true'] = dfx.ix[zi - 1, 'true']
 
     dfx['true1'] = dfx['true'].shift(1).fillna(0)
     dfx['cross'] = 0
     dfx.loc[(dfx['true'] == 1) & (dfx['true1'] == -1), 'cross'] = 1
     dfx.loc[(dfx['true'] == -1) & (dfx['true1'] == 1), 'cross'] = -1
-    true=dfx['true']
-    cross=dfx['cross']
+    true = dfx['true']
+    cross = dfx['cross']
     dfx.drop('true', axis=1, inplace=True)
     dfx.drop('true1', axis=1, inplace=True)
     dfx.drop('cross', axis=1, inplace=True)
-    return true,cross
+    return true, cross
 
-#计算MA df
-def MA(close,MA_Short,MA_Long):
-    df_MA=pd.DataFrame({'close':close})
-    df_MA['MA_Short']=calMA(df_MA['close'],MA_Short)
-    df_MA['MA_Long']=calMA(df_MA['close'],MA_Long)
-    df_MA['MA_True'],df_MA['MA_Cross']=dfCross(df_MA,'MA_Short','MA_Long')
+
+# 计算MA df
+def MA(close, MA_Short, MA_Long):
+    df_MA = pd.DataFrame({'close': close})
+    df_MA['MA_Short'] = calMA(df_MA['close'], MA_Short)
+    df_MA['MA_Long'] = calMA(df_MA['close'], MA_Long)
+    df_MA['MA_True'], df_MA['MA_Cross'] = dfCross(df_MA, 'MA_Short', 'MA_Long')
     return df_MA
 
-def EMA(close,MA_Short,MA_Long):
-    df_MA=pd.DataFrame({'close':close})
-    df_MA['MA_Short']=calEMA(df_MA['close'],MA_Short)
-    df_MA['MA_Long']=calEMA(df_MA['close'],MA_Long)
-    df_MA['MA_True'],df_MA['MA_Cross']=dfCross(df_MA,'MA_Short','MA_Long')
+
+def EMA(close, MA_Short, MA_Long):
+    df_MA = pd.DataFrame({'close': close})
+    df_MA['MA_Short'] = calEMA(df_MA['close'], MA_Short)
+    df_MA['MA_Long'] = calEMA(df_MA['close'], MA_Long)
+    df_MA['MA_True'], df_MA['MA_Cross'] = dfCross(df_MA, 'MA_Short', 'MA_Long')
     return df_MA
 
-def newMA(close,dfma,MA_Short,MA_Long):
-    lastclose=close.iloc[-1]
-    lasttrue=dfma.iloc[-1].MA_True
-    mashort=calNewMA(close,MA_Short)
-    malong=calNewMA(close,MA_Long)
-    if mashort>malong:MA_True=1
-    elif mashort<malong:MA_True=-1
-    else:MA_True=lasttrue
-    if lasttrue==-1 and MA_True==1:MA_Cross=1
-    elif lasttrue==1 and MA_True==-1:MA_Cross=-1
-    else:MA_Cross=0
-    return [lastclose,mashort,malong,MA_True,MA_Cross]
+
+def newMA(close, dfma, MA_Short, MA_Long):
+    lastclose = close.iloc[-1]
+    lasttrue = dfma.iloc[-1].MA_True
+    mashort = calNewMA(close, MA_Short)
+    malong = calNewMA(close, MA_Long)
+    if mashort > malong:
+        MA_True = 1
+    elif mashort < malong:
+        MA_True = -1
+    else:
+        MA_True = lasttrue
+    if lasttrue == -1 and MA_True == 1:
+        MA_Cross = 1
+    elif lasttrue == 1 and MA_True == -1:
+        MA_Cross = -1
+    else:
+        MA_Cross = 0
+    return [lastclose, mashort, malong, MA_True, MA_Cross]
+
+
+def hull_ma(close, n):
+    close_array = np.array(close.values, dtype='float')
+    n_2 = round(n/2)
+    n_squr = round(np.sqrt(n))
+    wma1 = talib.MA(close_array, n, matype=2)
+    wma2 = talib.MA(close_array, n_2, matype=2)
+    x = wma2*2 - wma1
+    hull_ma = talib.MA(x, n_squr, matype=2)
+    return hull_ma
+
+
+def hull_macd(closedata, short=12, long=26, mid=9):
+    """
+    计算MACD
+    :param closedata:
+    :param short:
+    :param long1:
+    :param mid:
+    :return:MACD,DEA,Bar,SEMA,LEMA
+    """
+    sema = hull_ma(closedata, short)
+    lema = hull_ma(closedata, long)
+    data_dif = sema - lema
+    data_dea = talib.MA(data_dif, mid, matype=1)
+    data_bar = 2 * (data_dif - data_dea)
+    return data_dif, data_dea, data_bar, sema, lema
+
 
 if __name__ == '__main__':
-    N=5
-    M=10
-    df=pd.read_csv('C:\\testdata\MacdMa_RB_xbardf_1.csv')
-    df['ema']=calEMA(df['close'],50)
-    print df.head(20)
-    df.to_csv('eam_test.csv')
-    #import numpy
-    #for i in numpy.arange(21,344):
-    #    df1.loc[i - 1]=newMA(df.iloc[0:i]['close'],df1,N,M)
-    #df1.to_csv('EMA.csv')
+    import DATA_CONSTANTS as DC
+    N = 10
+    testdata = DC.getBarBySymbol('SHFE.RB', 'RB1810', 3600)
+    testdata['data_dif'], testdata['data_dea'], testdata['data_bar'], testdata['sema'], testdata['lema'] = hull_macd(testdata['close'], 6, 24, 7)
+    testdata.to_csv('hull_macd.csv')
+    print testdata
 
 
-#df=pd.read_csv('ta-macd-after.csv')
+
+# df=pd.read_csv('ta-macd-after.csv')
 '''
 #MACD测试
 close=df['close']

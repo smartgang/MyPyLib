@@ -214,8 +214,11 @@ def getShortDrawbackByTick(bardf, stopTarget):
     return max_dd, max_dd_close, maxprice, strtime, utctime, 0
 
 
-def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, positionRatio, initialCash, slTarget, tofolder, indexcols):
+def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, result_para_dic, slTarget, tofolder, indexcols):
     print ("dsl_target:%.3f ,setname:%s" % (slTarget, setname))
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
+
     symbol = symbolInfo.domain_symbol
     oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
@@ -273,7 +276,7 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, positio
                 oprdf.ix[i, 'new_closeutc'] = utctime
                 worknum += 1
 
-        else:
+        elif oprtype == -1:
             # 空仓，取逆向最大回撤，min为最大收益，max为最小收闪
             max_dd, dd_close, minprice, strtime, utctime, timeindex = getShortDrawbackByTick(data1m, slTarget)
             oprdf.ix[i, 'max_opr_gain'] = (openprice - data1m.low.min()) / openprice
@@ -286,11 +289,19 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, positio
                 oprdf.ix[i, 'new_closeindex'] = timeindex
                 oprdf.ix[i, 'new_closeutc'] = utctime
                 worknum += 1
-
+        else:
+            # 被去极值的操作，oprtype为0,不做止损操作
+            pass
     slip = symbolInfo.getSlip()
     # 2017-12-08:加入滑点
     oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip
     oprdf['new_ret_r'] = oprdf['new_ret'] / oprdf['openprice']
+
+    # 去极值：在parallel的去极值结果上，把极值的new_ret和new_ret_r值0
+    if result_para_dic['remove_polar_switch']:
+        oprdf.loc[oprdf['tradetype']==0, 'new_ret'] = 0
+        oprdf.loc[oprdf['tradetype']==0, 'new_ret_r'] = 0
+
     oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,
                                                                                                                   symbolInfo,
                                                                                                                   initialCash,
@@ -314,7 +325,7 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, positio
     # return 0
 
 
-def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, pricetick, positionRatio, initialCash, slTarget, tofolder, indexcols):
+def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, pricetick, result_para_dic, slTarget, tofolder, indexcols):
     """
     增量式止损
     1.读取现有的止损文件，读取操作文件
@@ -324,6 +335,9 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
     5.保存文件，返回结果
     """
     print ("dsl_target:%.3f ,setname:%s" % (slTarget, setname))
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
+
     symbol = symbolInfo.domain_symbol
     orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
@@ -367,7 +381,7 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
                     oprdf.ix[i, 'new_closeindex'] = timeindex
                     oprdf.ix[i, 'new_closeutc'] = utctime
 
-            else:
+            elif oprtype == -1:
                 # 空仓，取逆向最大回撤，min为最大收益，max为最小收闪
                 max_dd, dd_close, minprice, strtime, utctime, timeindex = getShortDrawbackByTick(data1m, slTarget)
                 oprdf.ix[i, 'max_opr_gain'] = (openprice - data1m.low.min()) / openprice
@@ -379,7 +393,8 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
                     oprdf.ix[i, 'new_closetime'] = strtime
                     oprdf.ix[i, 'new_closeindex'] = timeindex
                     oprdf.ix[i, 'new_closeutc'] = utctime
-
+            else:
+                pass
         slip = symbolInfo.getSlip()
         # 2017-12-08:加入滑点
         oprdf['new_ret'] = ((oprdf['new_closeprice'] - oprdf['openprice']) * oprdf['tradetype']) - slip

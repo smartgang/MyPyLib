@@ -25,8 +25,21 @@ def ATR(high,low,close,N=26):
     df1['ATR']=df1['TR'].rolling(window=N).mean()
     return df1['TR'],df1['ATR']
 
+def new_atr(bar_data, N=26):
+    closeshift1 = bar_data.close.shift(1).fillna(0)
+    bar_data['c'] = bar_data.high - bar_data.low
+    bar_data['d'] = np.abs(bar_data.high - closeshift1)
+    bar_data['b'] = np.abs(bar_data.low - closeshift1)
+    bar_data['TR'] = bar_data[['c', 'd', 'b']].max(axis=1)
+    bar_data.loc[bar_data['open'] < bar_data['close'], 'TR'] = 0-bar_data['TR']
+    bar_data['ATR'] = np.abs(bar_data['TR'].rolling(window=N).mean())
+    return bar_data['TR'], bar_data['ATR']
+
+
 if __name__ == '__main__':
     N=26
     df=pd.read_csv('test.csv')
-    df['TR'],df['ATR']=ATR(df['high'],df['low'],df['close'],N)
-    df.to_csv('ATR.csv')
+    #df['TR'],df['ATR']=ATR(df['high'],df['low'],df['close'],N)
+    tr, atr = new_atr(df, N)
+    print atr
+    #df.to_csv('ATR.csv')

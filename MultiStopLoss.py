@@ -107,6 +107,32 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     return [setname,tofolder,slWorkNum,] + oldr + newr
 
 
+def multiStopLosslCal_remove_polar(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,barxmdic, positionRatio,initialCash,tofolder,indexcols):
+    print 'setname:', setname
+    symbol=symbolInfo.domain_symbol
+    oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    oprdf = RS.opr_result_remove_polar(oprdf=oprdf, new_cols=True)
+    symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
+    barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
+    dailyK = DC.generatDailyClose(barxm)
+
+    oprdf['new_commission_fee'], oprdf['new_per earn'], oprdf['new_own cash'], oprdf['new_hands'] = RS.calcResult(oprdf,
+                                                                                                      symbolInfo,
+                                                                                                      initialCash,
+                                                                                                      positionRatio,ret_col='new_ret')
+    oprdf.to_csv(tofolder+'\\'+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT_remove_polar.csv', index=False)
+
+    #计算统计结果
+    slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
+    olddailydf = pd.read_csv(stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
+    oldr = RS.getStatisticsResult(oprdf, False, indexcols,olddailydf)
+
+    dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
+    dR.calDailyResult()
+    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT_remove_polar.csv')
+    newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
+
+    return [setname,tofolder,slWorkNum,] + oldr + newr
 
 if __name__ == '__main__':
     pass

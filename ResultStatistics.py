@@ -637,13 +637,40 @@ class dailyReturn:
         # 计算夏普比率
         return (annual -0.0284) / vol
 
+
+def opr_result_remove_polar(oprdf,remove_rate=0.01):
+    # 操作结果去掉最高收益极值
+    cols = oprdf.columns.tolist()
+    if 'new_closeprice' in cols:
+        new_cols = True
+    else:
+        new_cols = False
+    oprnum = oprdf.shape[0]
+    polar_num = int(round(oprnum*remove_rate))  # 四舍五入再取整数
+    if new_cols:
+        ret_cols = 'new_ret'
+        ret_r_cols = 'new_ret_r'
+    else:
+        ret_cols = 'ret'
+        ret_r_cols = 'ret_r'
+    oprdf.sort_values(ret_r_cols, inplace=True, ascending=False)
+    for i in range(polar_num):
+        r = oprdf.index[i]
+        oprdf.loc[r, ret_cols] = 0
+        oprdf.loc[r, ret_r_cols] = 0
+        oprdf.loc[r, 'tradetype'] = 0
+    oprdf.sort_index(inplace=True)
+    return oprdf
+
 if __name__ == '__main__':
-    resultdf=pd.read_csv('D:\\002 MakeLive\myquant\LvyiWin\Results\SHFE RB600 slip\SHFE.RB600 Set6213 MS4 ML21 KN24 DN30 result.csv')
+    resultdf=pd.read_csv('D:\\002 MakeLive\myquant\HopeWin\Results\HopeMacdMaWin SHFE RB 3600\HopeMacdMaWin SHFE.RB3600 Set3 MS3 ML20 MM6 result.csv')
     #print annual_return(resultdf)
     #max_drawback(resultdf)
     #average_change(resultdf)
     #print('max_up:%d,max_down:%d'%(max_successive_up(resultdf)))
     #print('max_return:%.2f,min_return:%.2f'%(max_period_return(resultdf)))
     #print volatility(resultdf)
-    print sharpe_ratio(resultdf)
+    opr = opr_result_remove_polar(resultdf)
+    opr.to_csv('D:\\HopeMacdMaWin SHFE.RB3600 Set3 MS3 ML20 MM6 result_remove_polar.csv')
+    #print sharpe_ratio(resultdf)
     #print success_rate(resultdf)
