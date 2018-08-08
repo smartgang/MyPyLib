@@ -156,7 +156,7 @@ def ownlCalRealTick(symbol, K_MIN, setname, ticksupplier, barxm, winSwitch, nolo
 
 
 # ================================================================================================
-def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwitch, nolossThreshhold, positionRatio, initialCash, tofolder, indexcols):
+def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwitch, nolossThreshhold, result_para_dic, tofolder, indexcols):
     print ("ownl_target:%.3f, nolossThreshhold;%d,setname:%s" % (winSwitch, nolossThreshhold, setname))
     symbol = symbolInfo.domain_symbol
     oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -165,6 +165,9 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwi
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
     bar1m = bar1mPrepare(bar1m)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
+
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
 
     oprdf['new_closeprice'] = oprdf['closeprice']
     oprdf['new_closetime'] = oprdf['closetime']
@@ -236,7 +239,7 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwi
 
 
 # ================================================================================================
-def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwitch, nolossThreshhold, positionRatio, initialCash, tofolder, indexcols):
+def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwitch, nolossThreshhold, result_para_dic, tofolder, indexcols):
     """
     增量式止损
     """
@@ -248,6 +251,9 @@ def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
     bar1m = bar1mPrepare(bar1m)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
+
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
 
     orioprnum = orioprdf.shape[0]
     ownldf = pd.read_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultOWNL_by_tick.csv')
