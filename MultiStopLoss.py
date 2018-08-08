@@ -11,7 +11,7 @@ import multiprocessing
 from DynamicStopLoss import *
 from OnceWinNoLoss import  *
 
-def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,barxmdic, positionRatio,initialCash,tofolder,indexcols):
+def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,barxmdic, result_para_dic,tofolder,indexcols):
     print 'setname:', setname
     symbol=symbolInfo.domain_symbol
     oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -19,6 +19,9 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
     dailyK = DC.generatDailyClose(barxm)
+
+    positionRatio = result_para_dic['positionRatio']
+    initialCash = result_para_dic['initialCash']
 
     oprlist=[]
     sltnum=len(stopLossTargetDictList)
