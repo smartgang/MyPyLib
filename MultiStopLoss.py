@@ -106,7 +106,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     dR.calDailyResult()
     dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv')
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
-
+    print newr
     return [setname,tofolder,slWorkNum,] + oldr + newr
 
 
@@ -134,7 +134,7 @@ def multiStopLosslCal_remove_polar(stratetyName,symbolInfo,K_MIN,setname,stopLos
     dR.calDailyResult()
     dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT_remove_polar.csv')
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
-
+    print newr
     return [setname,tofolder,slWorkNum,] + oldr + newr
 
 if __name__ == '__main__':

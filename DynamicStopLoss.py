@@ -320,6 +320,7 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, result_
 
     del oprdf
     # return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    print newr
     return [setname, slTarget, worknum] + oldr + newr
 
     # return 0
@@ -427,6 +428,7 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
     del orioprdf
     del dsldf
     # return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    print newr
     return [setname, slTarget, worknum] + oldr + newr
 
 

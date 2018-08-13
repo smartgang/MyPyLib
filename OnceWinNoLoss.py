@@ -234,6 +234,7 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwi
     max_single_loss_rate = abs(oprdf['new_ret_r'].min())
     #max_retrace_rate = oprdf['new_retrace rate'].max()
     '''
+    print newr
     return [setname, winSwitch, worknum] + oldr + newr
     # return [setname,winSwitch,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
 
@@ -321,7 +322,7 @@ def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     del oprdf
     del orioprdf
     del ownldf
-
+    print newr
     return [setname, winSwitch, worknum] + oldr + newr
 
 

@@ -122,6 +122,7 @@ def fix_value_stop_loss(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barx
 
     del oprdf
     # return [setname,slTarget,worknum,oldendcash,oldAnnual,oldSharpe,oldDrawBack,oldSR,newendcash,newAnnual,newSharpe,newDrawBack,newSR,max_single_loss_rate]
+    print newr
     return [setname, spr, slr, worknum] + oldr + newr
 
 if __name__ == '__main__':

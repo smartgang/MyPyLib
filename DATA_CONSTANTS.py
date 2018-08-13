@@ -162,6 +162,11 @@ def getVolumeData(symbol='SHFE.RB', K_MIN=60, starttime='2017-05-01 00:00:00', e
     return df
 
 
+def getTickDateBySymbolDate(domain_symbol='SHFE.RB', symbol='RB1810', date='2018-08-09'):
+    file_name = BAR_DATA_PATH + "%s\\TICK_%s\\Tick_Data_%s_%s.csv" % (domain_symbol, symbol, symbol, date)
+    tick_data = pd.read_csv(file_name)
+    return tick_data
+
 '''
 def getTickData(symbol='SHFE.RB',K_MIN=60,startdate='2017-05-01',enddate='2018-01-01'):
 
