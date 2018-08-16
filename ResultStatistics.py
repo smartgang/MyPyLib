@@ -480,7 +480,7 @@ def calcResult(result, symbolinfo, initialCash, positionRatio, ret_col='ret'):
 
 
 class dailyReturn:
-    '''日收益类，将以操作纬度组织结果的oprdf转换为以交易日为纬度的dailyReturn'''
+    """日收益类，将以操作纬度组织结果的oprdf转换为以交易日为纬度的dailyReturn"""
 
     openheader = ['opentime', 'openutc', 'openindex', 'openprice', 'tradetype', 'hands']
     new_openheader = ['opentime', 'openutc', 'openindex', 'openprice', 'tradetype', 'new_hands']

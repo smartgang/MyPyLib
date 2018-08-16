@@ -77,7 +77,7 @@ def getBarBySymbol(domain_symbol, symbol, bar_type, starttime=None, endtime=None
     return df
 
 
-def getBarBySymbolList(domain_symbol, symbollist, bar_type, startdate=None, enddate=None):
+def getBarBySymbolList(domain_symbol, symbollist, bar_type, startdate=None, enddate=None, cols=None):
     # 取全部主力合约的数据，以dic的形式返回
     bardic = {}
     startutc = None
@@ -90,7 +90,10 @@ def getBarBySymbolList(domain_symbol, symbollist, bar_type, startdate=None, endd
         endutc = float(time.mktime(time.strptime(enddate + " 23:59:59", "%Y-%m-%d %H:%M:%S")))
     for symbol in symbollist:
         filename = BAR_DATA_PATH + domain_symbol + '\\' + symbol + ' ' + str(bar_type) + '.csv'
-        bardf = pd.read_csv(filename)
+        if cols:
+            bardf = pd.read_csv(filename)[cols]
+        else:
+            bardf = pd.read_csv(filename)
         if startutc:
             bardf = bardf.loc[bardf['utc_time'] >= startutc]
         if endutc:
