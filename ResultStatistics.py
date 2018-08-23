@@ -208,11 +208,19 @@ def short_opr_times(resultdf, new=False):
 
 
 def end_cash(resultdf, new=False):
-    '''最终资金'''
+    """最终资金"""
     if new:
         return resultdf.iloc[-1]['new_own cash']
     else:
         return resultdf.iloc[-1]['own cash']
+
+
+def max_own_cash(resultdf, new=False):
+    """最大期间资金"""
+    if new:
+        return resultdf['new_own cash'].max()
+    else:
+        return resultdf['own cash'].max()
 
 
 def long_opr_rate(resultdf, new=False):
@@ -392,6 +400,7 @@ ResultIndexFucnMap = {
     "LongOprTimes": long_opr_times,  # 多操作次数
     "ShortOprTimes": short_opr_times,  # 空操作次数
     "EndCash": end_cash,  # 最终资金
+    "MaxOwnCash": max_own_cash,
     "LongOprRate": long_opr_rate,  # 多操作占比
     "ShortOprRate": short_opr_rate,  # 空操作占比
     "Annual": annual,  # 年化收益
