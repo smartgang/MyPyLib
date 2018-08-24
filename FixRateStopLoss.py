@@ -141,8 +141,8 @@ def frslCalRealTick(strategyName, symbol, K_MIN, setname, ticksupplier, barxm, f
 
 
 # ================================================================================================
-def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate, result_para_dic, tofolder, indexcols):
-    print ("frsl_target:%.3f ,setname:%s" % (fixRate, setname))
+def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate_dic, result_para_dic, tofolder, indexcols):
+    print ("frsl_target:%s ,setname:%s" % (fixRate_dic['para_name'], setname))
     symbol = symbolInfo.domain_symbol
     pricetick = symbolInfo.getPriceTick()
     oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
@@ -152,6 +152,7 @@ def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRat
     bar1m = bar1mPrepare(bar1m)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
 
+    fixRate = fixRate_dic['frsl_target']
     positionRatio = result_para_dic['positionRatio']
     initialCash = result_para_dic['initialCash']
 
@@ -213,15 +214,16 @@ def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRat
 
 
 # ================================================================================================
-def progressFrslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate, result_para_dic, tofolder, indexcols):
+def progressFrslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRate_dic, result_para_dic, tofolder, indexcols):
     """
     增量式止损
     """
-    print ("frsl_target:%.3f ,setname:%s" % (fixRate, setname))
+    print ("frsl_target:%s ,setname:%s" % (fixRate_dic['para_name'], setname))
     symbol = symbolInfo.domain_symbol
     pricetick = symbolInfo.getPriceTick()
     orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
+    fixRate = fixRate_dic['frsl_target']
     positionRatio = result_para_dic['positionRatio']
     initialCash = result_para_dic['initialCash']
 

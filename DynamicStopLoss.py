@@ -214,8 +214,9 @@ def getShortDrawbackByTick(bardf, stopTarget):
     return max_dd, max_dd_close, maxprice, strtime, utctime, 0
 
 
-def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, result_para_dic, slTarget, tofolder, indexcols):
-    print ("dsl_target:%.3f ,setname:%s" % (slTarget, setname))
+def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, result_para_dic, slTarget_dic, tofolder, indexcols):
+    print ("dsl_target:%s ,setname:%s" % (slTarget_dic['para_name'], setname))
+    slTarget = slTarget_dic['dsl_target']
     positionRatio = result_para_dic['positionRatio']
     initialCash = result_para_dic['initialCash']
 
@@ -326,7 +327,7 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, result_
     # return 0
 
 
-def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, pricetick, result_para_dic, slTarget, tofolder, indexcols):
+def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, pricetick, result_para_dic, slTarget_dic, tofolder, indexcols):
     """
     增量式止损
     1.读取现有的止损文件，读取操作文件
@@ -335,7 +336,8 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
     4.将新止损结果合入原止损结果中，重新计算统计结果
     5.保存文件，返回结果
     """
-    print ("dsl_target:%.3f ,setname:%s" % (slTarget, setname))
+    print ("dsl_target:%s ,setname:%s" % (slTarget_dic['para_name'], setname))
+    slTarget = slTarget_dic['dsl_target']
     positionRatio = result_para_dic['positionRatio']
     initialCash = result_para_dic['initialCash']
 

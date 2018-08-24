@@ -156,8 +156,9 @@ def ownlCalRealTick(symbol, K_MIN, setname, ticksupplier, barxm, winSwitch, nolo
 
 
 # ================================================================================================
-def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwitch, nolossThreshhold, result_para_dic, tofolder, indexcols):
-    print ("ownl_target:%.3f, nolossThreshhold;%d,setname:%s" % (winSwitch, nolossThreshhold, setname))
+def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, ownl_para_dic, result_para_dic, tofolder, indexcols):
+    print ("ownl_target:%s, setname:%s" % (ownl_para_dic['para_name'], setname))
+
     symbol = symbolInfo.domain_symbol
     oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
@@ -165,6 +166,9 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwi
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
     bar1m = bar1mPrepare(bar1m)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
+
+    winSwitch = ownl_para_dic['ownl_protect']
+    nolossThreshhold = ownl_para_dic['ownl_floor']
 
     positionRatio = result_para_dic['positionRatio']
     initialCash = result_para_dic['initialCash']
@@ -240,11 +244,11 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwi
 
 
 # ================================================================================================
-def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, winSwitch, nolossThreshhold, result_para_dic, tofolder, indexcols):
+def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, ownl_para_dic, result_para_dic, tofolder, indexcols):
     """
     增量式止损
     """
-    print ("ownl_target:%.3f, nolossThreshhold;%d,setname:%s" % (winSwitch, nolossThreshhold, setname))
+    print ("ownl_target:%s, setname:%s" % (ownl_para_dic['para_name'], setname))
     symbol = symbolInfo.domain_symbol
     orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
@@ -252,6 +256,9 @@ def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
     bar1m = bar1mPrepare(bar1m)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), barxmdic, symbolDomainDic)
+
+    winSwitch = ownl_para_dic['ownl_protect']
+    nolossThreshhold = ownl_para_dic['ownl_floor']
 
     positionRatio = result_para_dic['positionRatio']
     initialCash = result_para_dic['initialCash']

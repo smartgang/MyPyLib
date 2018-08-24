@@ -406,7 +406,6 @@ class TickDataSupplier:
     def getDateList(self):
         return self.datelist
 
-
 def symbolInfoTest():
     domain_symbol = 'SHFE.RB'
     symbolinfo = SymbolInfo(domain_symbol)
