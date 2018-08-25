@@ -11,10 +11,11 @@ import multiprocessing
 from DynamicStopLoss import *
 from OnceWinNoLoss import  *
 
-def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,barxmdic, result_para_dic,tofolder,indexcols):
+def multiStopLosslCal(strategyName,symbolInfo,K_MIN,setname,stopLossTargetDictList,barxmdic, result_para_dic,tofolder,indexcols):
     print 'setname:', setname
     symbol=symbolInfo.domain_symbol
-    oprdf = pd.read_csv(stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    bt_folder = "%s %d backtesting\\" % (symbol, K_MIN)
+    oprdf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
     barxm = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(),barxmdic, symbolDomainDic)
@@ -28,7 +29,7 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
     for i in range(sltnum):
         slt=stopLossTargetDictList[i]
         #遍历读取各止损目标的结果文件,按名称将结果写入oprdf中
-        sltdf=pd.read_csv("%s%s %s%d %s %s"%(slt['folder'],stratetyName,symbol,K_MIN,setname,slt['fileSuffix']))
+        sltdf=pd.read_csv("%s%s %s%d %s %s"%(slt['folder'],strategyName,symbol,K_MIN,setname,slt['fileSuffix']))
         sltName=slt['name']
         oprdf[sltName+'_closeprice'] = sltdf['new_closeprice']
         oprdf[sltName+'_closetime'] = sltdf['new_closetime']
@@ -95,16 +96,16 @@ def multiStopLosslCal(stratetyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
                                                                                                       symbolInfo,
                                                                                                       initialCash,
                                                                                                       positionRatio,ret_col='new_ret')
-    oprdf.to_csv(tofolder+'\\'+stratetyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv', index=False)
+    oprdf.to_csv(tofolder+'\\'+strategyName+' '+symbol + str(K_MIN) + ' ' + setname + ' result_multiSLT.csv', index=False)
 
     #计算统计结果
     slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
-    olddailydf = pd.read_csv(stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
+    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
     oldr = RS.getStatisticsResult(oprdf, False, indexcols,olddailydf)
 
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
     dR.calDailyResult()
-    dR.dailyClose.to_csv(tofolder+'\\'+stratetyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv')
+    dR.dailyClose.to_csv(tofolder+'\\'+strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult_multiSLT.csv')
     newr = RS.getStatisticsResult(oprdf,True,indexcols,dR.dailyClose)
     print newr
     return [setname,tofolder,slWorkNum,] + oldr + newr

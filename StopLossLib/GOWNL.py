@@ -165,7 +165,8 @@ def gownl(strategy_name, symbol_info, bar_type, setname, bar1mdic, barxmdic, slt
     gownl_target_name = "gownl_protect:%.3f, gownl_floor:%.1f, gownl_step: %.1f" % ( gownl_protect, gownl_floor, gownl_step)
     print ("setname:%s %s" % (setname, gownl_target_name))
     symbol = symbol_info.domain_symbol
-    oprdf = pd.read_csv(strategy_name + ' ' + symbol + str(bar_type) + ' ' + setname + ' result.csv')
+    bt_folder = "%s %d backtesting\\" % (symbol, bar_type)
+    oprdf = pd.read_csv(bt_folder + strategy_name + ' ' + symbol + str(bar_type) + ' ' + setname + ' result.csv')
 
     symbolDomainDic = symbol_info.amendSymbolDomainDicByOpr(oprdf)
     bar1m = DC.getDomainbarByDomainSymbol(symbol_info.getSymbolList(), bar1mdic, symbolDomainDic)
@@ -244,8 +245,9 @@ def progress_gownl(strategy_name, symbol_info, bar_type, setname, bar1mdic, barx
     增量式止损
     """
     print ("ownl_target:%.3f, nolossThreshhold;%d,setname:%s" % (winSwitch, nolossThreshhold, setname))
-    symbol = symbolInfo.domain_symbol
-    orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    symbol = symbol_info.domain_symbol
+    bt_folder = "%s %d backtesting\\" % (symbol, bar_type)
+    orioprdf = pd.read_csv(bt_folder + strategy_name + ' ' + symbol + str(bar_type) + ' ' + setname + ' result.csv')
 
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(orioprdf)
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)

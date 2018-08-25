@@ -160,7 +160,8 @@ def ownlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, ownl_p
     print ("ownl_target:%s, setname:%s" % (ownl_para_dic['para_name'], setname))
 
     symbol = symbolInfo.domain_symbol
-    oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    bt_folder = "%s %d backtesting\\" % (symbol, K_MIN)
+    oprdf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
@@ -250,7 +251,8 @@ def progressOwnlCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     """
     print ("ownl_target:%s, setname:%s" % (ownl_para_dic['para_name'], setname))
     symbol = symbolInfo.domain_symbol
-    orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    bt_folder = "%s %d backtesting\\" % (symbol, K_MIN)
+    orioprdf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(orioprdf)
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)

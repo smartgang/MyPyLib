@@ -145,7 +145,8 @@ def frslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, fixRat
     print ("frsl_target:%s ,setname:%s" % (fixRate_dic['para_name'], setname))
     symbol = symbolInfo.domain_symbol
     pricetick = symbolInfo.getPriceTick()
-    oprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    bt_folder = "%s %d backtesting\\" % (symbol, K_MIN)
+    oprdf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
     symbolDomainDic = symbolInfo.amendSymbolDomainDicByOpr(oprdf)
     bar1m = DC.getDomainbarByDomainSymbol(symbolInfo.getSymbolList(), bar1mdic, symbolDomainDic)
@@ -221,7 +222,8 @@ def progressFrslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic
     print ("frsl_target:%s ,setname:%s" % (fixRate_dic['para_name'], setname))
     symbol = symbolInfo.domain_symbol
     pricetick = symbolInfo.getPriceTick()
-    orioprdf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
+    bt_folder = "%s %d backtesting\\" % (symbol, K_MIN)
+    orioprdf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' result.csv')
 
     fixRate = fixRate_dic['frsl_target']
     positionRatio = result_para_dic['positionRatio']
