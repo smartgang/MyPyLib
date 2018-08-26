@@ -310,7 +310,7 @@ def dslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, result_
                                                                                                                   positionRatio, ret_col='new_ret')
     # 保存新的result文档
     oprdf.to_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultDSL_by_tick.csv', index=False)
-    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv', index_col='date')
+    olddailydf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv', index_col='date')
     # 计算统计结果
     oldr = RS.getStatisticsResult(oprdf, False, indexcols, olddailydf)
 
@@ -419,7 +419,7 @@ def progressDslCal(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic,
 
     # 计算统计结果
     worknum = oprdf.loc[oprdf['new_closeindex'] != oprdf['closeindex']].shape[0]
-    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv', index_col='date')
+    olddailydf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv', index_col='date')
     oldr = RS.getStatisticsResult(oprdf, False, indexcols, olddailydf)
 
     dailyK = DC.generatDailyClose(barxm)

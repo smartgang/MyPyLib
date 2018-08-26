@@ -341,7 +341,7 @@ def atrsl(strategyName, symbolInfo, K_MIN, setname, bar1mdic, barxmdic, sl_para_
     #barxm.to_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' barxm.csv')
     # 保存新的result文档
     oprdf.to_csv(tofolder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' resultATR_by_tick.csv', index=False)
-    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv', index_col='date')
+    olddailydf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv', index_col='date')
     # 计算统计结果
     oldr = RS.getStatisticsResult(oprdf, False, indexcols, olddailydf)
 
