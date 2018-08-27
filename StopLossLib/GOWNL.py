@@ -225,7 +225,7 @@ def gownl(strategy_name, symbol_info, bar_type, setname, bar1mdic, barxmdic, slt
     # 保存新的result文档
     oprdf.to_csv(tofolder + strategy_name + ' ' + symbol + str(bar_type) + ' ' + setname + ' resultGOWNL_by_tick.csv', index=False)
 
-    olddailydf = pd.read_csv(strategy_name + ' ' + symbol + str(bar_type) + ' ' + setname + ' dailyresult.csv', index_col='date')
+    olddailydf = pd.read_csv(bt_folder + strategy_name + ' ' + symbol + str(bar_type) + ' ' + setname + ' dailyresult.csv', index_col='date')
     # 计算统计结果
     oldr = RS.getStatisticsResult(oprdf, False, indexcols, olddailydf)
 
