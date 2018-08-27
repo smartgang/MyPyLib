@@ -41,7 +41,7 @@ def get_long_gownl_by_tick(bardf, openprice, gownl_protect, gownl_floor, gownl_s
     df['maxEarnRate'] = df['max2here'] / openprice - 1
     df2 = df.loc[df['maxEarnRate'] > gownl_protect]
     if df2.shape[0] > 0:
-        protect_index_num = df2.iloc[0, 'index_num']
+        protect_index_num = df2.iloc[0]['index_num']
         df2['protect_time'] = df2['index_num'] - protect_index_num  # 计算出保护时长
         df2['protect_floor'] = openprice + gownl_floor + df2['protect_time'] * gownl_step
         tempdf = df2.loc[df2['low'] <= df2['protect_floor']]
@@ -61,7 +61,7 @@ def get_short_gownl_by_tick(bardf, openprice, gownl_protect, gownl_floor, gownl_
     df['maxEarnRate'] = 1 - df['min2here'] / openprice
     df2 = df.loc[df['maxEarnRate'] > gownl_protect]
     if df2.shape[0] > 0:
-        protect_index_num = df2.iloc[0, 'index_num']
+        protect_index_num = df2.iloc[0]['index_num']
         df2['protect_time'] = df2['index_num'] - protect_index_num  # 计算出保护时长
         df2['protect_floor'] = openprice - gownl_floor - df2['protect_time'] * gownl_step
         tempdf = df2.loc[df2['high'] >= df2['protect_floor']]
