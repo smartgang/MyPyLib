@@ -100,7 +100,7 @@ def multiStopLosslCal(strategyName,symbolInfo,K_MIN,setname,stopLossTargetDictLi
 
     #计算统计结果
     slWorkNum=oprdf.loc[oprdf['closetype']!='Normal'].shape[0]
-    olddailydf = pd.read_csv(strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
+    olddailydf = pd.read_csv(bt_folder + strategyName + ' ' + symbol + str(K_MIN) + ' ' + setname + ' dailyresult.csv',index_col='date')
     oldr = RS.getStatisticsResult(oprdf, False, indexcols,olddailydf)
 
     dR = RS.dailyReturn(symbolInfo, oprdf, dailyK, initialCash)  # 计算生成每日结果
